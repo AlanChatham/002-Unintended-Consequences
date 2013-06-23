@@ -24,7 +24,7 @@ class HeadCam {
 	
 	HeadCam();
 	HeadCam( float camDist, float aspectRatio );
-	void update( float power, float dt );
+	void update( Vec3f projectionPosition, Vec3f bottomLeft, Vec3f bottomRight, Vec3f topLeft);
 	void dragCam( const ci::Vec2f &posOffset, float distFromCenter );
 	void draw();
 	ci::CameraPersp getCam(){ return mCam; }

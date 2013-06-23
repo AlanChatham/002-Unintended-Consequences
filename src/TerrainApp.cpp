@@ -53,7 +53,8 @@ class TerrainApp : public AppBasic {
 	void			drawTerrain();
 	void			drawInfoPanel();
 	void			createNewWindow();
-	void			setCameras(const osc::Message*);
+	void			checkOSCMessage(const osc::Message*);
+	void			setCameras(Vec3f headPosition);
 	void 			adjustProjection(Vec3f bottomLeft, Vec3f bottomRight, Vec3f topLeft, Vec3f eyePos, float n, float f);
 
 	
@@ -112,17 +113,17 @@ class TerrainApp : public AppBasic {
 	Vec2f				mMousePos, mMousePosNorm, mMouseDownPos, mMouseOffset;
 	bool				mMouseLeftDown, mMouseRightDown;
 
-	// FBO viewports
+	// Viewports
 	gl::Fbo				mFbo0, mFbo1;
 	Area				mViewArea0, mViewArea1;
-};
 
-
-	//Fuck it, making these globals since I can't figure out how to
-	// create a callback to a member function that actually works.
+	// Camera stuff
 	HeadCam			mHeadCam0;
 	HeadCam			mActiveHeadCam;
 	HeadCam			mHeadCam1;
+
+};
+
 
 void TerrainApp::prepareSettings( Settings *settings )
 {
@@ -131,7 +132,7 @@ void TerrainApp::prepareSettings( Settings *settings )
 	settings->setBorderless( false );
 }
 
-void TerrainApp::setCameras(const osc::Message * message){
+void TerrainApp::checkOSCMessage(const osc::Message * message){
 	// Sanity check that we have our legit head message
 	if (message->getAddress() == "/head" && message->getNumArgs() == 3){
 		//console() << "New message received" << std::endl;
@@ -139,47 +140,55 @@ void TerrainApp::setCameras(const osc::Message * message){
 		float headY = message->getArgAsFloat(1);
 		float headZ = message->getArgAsFloat(2);
 
-		headX = ((3 * (headX )) / 5) - 600;
-		headY = (3 * headY ) / 5 + 150;
-		headZ = (headZ * 3.28f * 50); // Seems like we're doing 100px per foot
-
-		float screenKinectDistance = 450;
-		headZ = screenKinectDistance + headZ;
-
-/*		float side2;
-		float side3;
-
-		// Get the size of the triangle made up by the camera and the screen - FOV is the vertical angle
-		float side1 = ROOM_HEIGHT; // The height of the screen
-		if (headX < (-ROOM_HEIGHT / 2)){
-			side2 = sqrtf(powf(headZ, 2) + powf(headY - (ROOM_HEIGHT / 2), 2) + powf(headX + (ROOM_WIDTH / 2), 2)); 
-			side3 = sqrtf(powf(headZ, 2) + powf(headY + (ROOM_HEIGHT / 2), 2) + powf(headX + (ROOM_WIDTH / 2), 2)); 
-		}
-		else if (headX > (ROOM_HEIGHT / 2)){
-			side2 = sqrtf(powf(headZ, 2) + powf(headY - (ROOM_HEIGHT / 2), 2) + powf(headX - (ROOM_WIDTH / 2), 2));
-			side3 = sqrtf(powf(headZ, 2) + powf(headY + (ROOM_HEIGHT / 2), 2) + powf(headX - (ROOM_WIDTH / 2), 2)); 
-		}
-		else{
-			side2 = sqrtf(powf(headZ, 2) + powf(headY - (ROOM_HEIGHT / 2), 2));
-			side3 = sqrtf(powf(headZ, 2) + powf(headY + (ROOM_HEIGHT / 2), 2)); 
-		}
-		console() << "side 2 = " << side2 << std::endl;
-		console() << "side 3 = " << side3 << std::endl;
-
-		// Law of cosines in 2 easy parts!
-		float fovAngle = (powf(side2, 2) + powf(side3, 2) - powf(side1, 2)) / (2 * side2 * side3);
-		fovAngle = acos(fovAngle) * (180 / 3.14159265f);
-		console() << "FOVAngle = " <<fovAngle << std::endl;
-*/		
-//		mHeadCam0.setEye(Vec3f(headX, headY, mHeadCam0.mCamDist));
-		mHeadCam0.setEye(Vec3f(headX, headY, headZ + (ROOM_DEPTH / 2))); // The 300 is b/c the coordinates are based on room center
-//		mHeadCam0.setCenter(Vec3f(mHeadCam0.mCenter.x, mHeadCam0.mCenter.y, 0.0f));
-		//mHeadCam0.setCenter(Vec3f(-headX / 10, mHeadCam0.mCenter.y, 0.0f));
-//		mHeadCam0.setFov(fovAngle);
-//			mHeadCam1.mEye = Vec3f(headX, headY, mHeadCam0.mCamDist);
-//		console() << mHeadCam0.mEye << std::endl;
-			
+		setCameras(Vec3f(headX, headY, headZ));
 	}
+}
+
+void TerrainApp::setCameras(Vec3f headPosition){
+	// Separate out the components	
+	float headX = headPosition.x;
+	float headY = headPosition.y;
+	float headZ = headPosition.z;
+	
+	// Adjust these away from the wonky coordinates we get from the Kinect,
+	//  then normalize them so that they're in units of 100px per foot,
+	//  then shift them so that the origin is at the corner where the two meet
+/*	headX = ((3 * (headX )) / 5) - 600 + (ROOM_DEPTH / 2);
+	headY = (3 * headY ) / 5 + 150;
+	headZ = (headZ * 3.28f * 50); // Seems like we're doing 100px per foot
+
+	float screenKinectDistance = 450;
+	headZ = screenKinectDistance + headZ + (ROOM_DEPTH / 2);
+	*/
+	float xOffset = 300;
+	headX += xOffset;
+
+	// Make sure that the cameras are located somewhere in front of the screens
+	//  Orientation is   X
+	//                   |        ------> Screen 2 x axis
+	//                   |   ------ Screen 2
+	//                   |   |
+	//                   |   |
+	//         Z----<----|---o < Screen 1, o is the origin
+	//                   |   | 
+	//                   v   |
+
+	//console() << "headX: " << headX << std::endl;
+	//console() << "headZ: " << headZ << std::endl;
+
+//	if (headZ > 0){
+		mHeadCam0.setEye(Vec3f(headX - xOffset, headY, headZ));
+//	}
+	//else{
+//		mHeadCam0.mEye = Vec3f(0,0,1200);
+	//}
+	//if (headX < 0){
+		// headZ is negative here since that axis is backwards on Screen 2
+		mHeadCam1.setEye(Vec3f(headX - xOffset, headY, headZ));
+	//}
+	//else{
+	//	mHeadCam1.mEye = Vec3f(-1200,0,0);
+	//}
 }
 
 
@@ -193,20 +202,23 @@ void TerrainApp::setup()
 	
 	// Setup the camera for the main window
 	mHeadCam0 = HeadCam( 1200.0f, getWindowAspectRatio() );
+	mHeadCam0.mEye = Vec3f(-1200,0,1200);
 	mHeadCam0.mEye.y = 0;
 	mHeadCam0.mCenter = Vec3f(0,0, ROOM_DEPTH / 2 );
-	console() << "Eye height = " << mHeadCam0.mEye.y << std::endl;
 
 	mHeadCam1 = HeadCam( 1200.0f, getWindowAspectRatio() );
-	mHeadCam1.mEye.y = 0;
-	mHeadCam1.mCenter = Vec3f(0,0, ROOM_DEPTH / 2 );
-	//getWindow()->setUserData( new HeadCam( -500.0f, getWindowAspectRatio() ));
-	getWindow()->setUserData(&mHeadCam1);
+	mHeadCam1.mEye = Vec3f(-1200,0,0);
+	mHeadCam1.mCenter = Vec3f(-ROOM_WIDTH / 2, 0, 0 );
+
+
+	//getWindow()->setUserData(&mHeadCam1);
+
+	//setCameras(Vec3f(-1200,0,0));
 	// And create a new window with stuff too
 //	createNewWindow();
 
 	// Set up a listener for OSC messages
-	oscListener.setup(7110);
+////	oscListener.setup(7110);
 
 	// LOAD SHADERS
 	try {
@@ -388,14 +400,17 @@ void TerrainApp::keyDown( KeyEvent event )
 	}
 	
 	switch( event.getCode() ){
-		case KeyEvent::KEY_UP:		mMouseRightPos = Vec2f( 222.0f, 205.0f ) + getWindowCenter();	break;
+		//case KeyEvent::KEY_UP:		mMouseRightPos = Vec2f( 222.0f, 205.0f ) + getWindowCenter();	break;
+		case KeyEvent::KEY_UP:		setCameras(Vec3f(mHeadCam0.mEye.x, mHeadCam0.mEye.y, mHeadCam0.mEye.z - 100));
+									break;
 		//case KeyEvent::KEY_LEFT:	mMouseRightPos = Vec2f(-128.0f,-178.0f ) + getWindowCenter();	break;
-		case KeyEvent::KEY_LEFT:	mHeadCam0.setEye(Vec3f(mHeadCam0.mEye.x - 100, mHeadCam0.mEye.y, mHeadCam0.mEye.z));
-									mHeadCam0.setCenter(Vec3f(mHeadCam0.mCenter.x, mHeadCam0.mCenter.y, mHeadCam0.mCenter.z));
-									mHeadCam0.setFov(mHeadCam0.mFov);	break;
-		//case KeyEvent::KEY_RIGHT:	mMouseRightPos = Vec2f(-256.0f, 122.0f ) + getWindowCenter();	break;
-		case KeyEvent::KEY_RIGHT:	mHeadCam0.setEye(Vec3f(mHeadCam0.mEye.x + 100, mHeadCam0.mEye.y, mHeadCam0.mEye.z));	break;
-		case KeyEvent::KEY_DOWN:	mMouseRightPos = Vec2f(   0.0f,   0.0f ) + getWindowCenter();	break;
+		case KeyEvent::KEY_LEFT:	setCameras(Vec3f(mHeadCam0.mEye.x - 100, mHeadCam0.mEye.y, mHeadCam0.mEye.z));
+									break;
+			//case KeyEvent::KEY_RIGHT:	mMouseRightPos = Vec2f(-256.0f, 122.0f ) + getWindowCenter();	break;
+		case KeyEvent::KEY_RIGHT:	setCameras(Vec3f(mHeadCam0.mEye.x + 100, mHeadCam0.mEye.y, mHeadCam0.mEye.z));	break;
+		//case KeyEvent::KEY_DOWN:	mMouseRightPos = Vec2f(   0.0f,   0.0f ) + getWindowCenter();	break;
+		case KeyEvent::KEY_DOWN:	setCameras(Vec3f(mHeadCam0.mEye.x, mHeadCam0.mEye.y, mHeadCam0.mEye.z + 100));
+									break;
 		default: break;
 	}
 	
@@ -439,14 +454,57 @@ void TerrainApp::update()
 		osc::Message message;
 		oscListener.getNextMessage( &message );
 		
-		setCameras(&message);
+		checkOSCMessage(&message);
 	}
 
 	//if( mMouseLeftDown ) 
 	//	mActiveHeadCam.dragCam( ( mMouseOffset ) * 0.01f, ( mMouseOffset ).length() * 0.01 );
 	//mActiveHeadCam.update( mRoom.getPower(), 0.5f );
-	mHeadCam0.update(mRoom.getPower(), 0.5f);
-	mHeadCam1.update(mRoom.getPower(), 0.5f);
+
+	Vec3f projectionEye = mHeadCam0.mEye;
+	projectionEye.x = mHeadCam0.mCenter.x;
+	projectionEye.y = mHeadCam0.mCenter.y;
+
+	float zOffset = projectionEye.z - mHeadCam0.mCenter.z;
+	
+	Vec3f bottomLeft = Vec3f(-300, -200, -zOffset);
+	Vec3f bottomRight = Vec3f(300, -200, -zOffset);
+	Vec3f topLeft = Vec3f(-300, 200, -zOffset);
+
+	mHeadCam0.update(projectionEye, bottomLeft, bottomRight, topLeft);
+	console() << "cam0 position" << mHeadCam0.mEye << std::endl;
+	console() << "projectionEye position" << projectionEye << std::endl;
+
+	
+	
+
+	// Now update Camera 1
+	
+	
+	float xOffset = projectionEye.x - mHeadCam1.mCenter.x;
+	
+	// The values we pass into update for the bounds and the projectionEye need to 
+	//  be coordinates relative to the camera, but mHeadCam1 is in global coordinates!
+	bottomLeft = Vec3f(-300, -200, mHeadCam1.mEye.x + 300);//xOffset);
+	bottomRight = Vec3f(300, -200, mHeadCam1.mEye.x + 300);//xOffset);
+	topLeft = Vec3f(-300, 200, mHeadCam1.mEye.x + 300);//xOffset);
+	
+	projectionEye.y = mHeadCam1.mCenter.y;
+	projectionEye.z = mHeadCam1.mCenter.z;
+
+	Vec3f tempEye = mHeadCam1.mEye;
+	mHeadCam1.mEye.x = tempEye.z;
+	mHeadCam1.mEye.z = -tempEye.x;
+
+	projectionEye = Vec3f(-mHeadCam1.mEye.z,0, 0);
+	//projectionEye = Vec3f(-1200,0, 0);
+	
+	mHeadCam1.update(projectionEye, bottomLeft, bottomRight, topLeft);
+	console() << "cam1 position" << mHeadCam1.mEye << std::endl;
+	console() << "projectionEye position" << projectionEye << std::endl;
+
+	mHeadCam1.mEye.x = tempEye.x;
+	mHeadCam1.mEye.z = tempEye.z;
 }
 
 void TerrainApp::drawIntoRoomFbo()
@@ -596,7 +654,6 @@ void TerrainApp::drawSphere()
 		gl::draw(mRandomSpheres[i], 20);
 	}
 	mSphereShader.unbind();
-	gl::drawSphere(Vec3f::zero(), 40.0f);
 }
 
 void TerrainApp::drawTerrain()

@@ -33,25 +33,19 @@ void HeadCam::setFov(float fov){
 	mCam.setPerspective( mFov, mAspectRatio, 1.0f, 3000.0f );
 }
 
-void HeadCam::update( float power, float dt )
+void HeadCam::update( Vec3f projectionPosition, Vec3f bottomLeft, Vec3f bottomRight, Vec3f topLeft)
 {	
-	/*if( power > 0.5f ){
-		mFov -= ( mFov - 30.0f ) * 0.025f;
-	} else {
-		mFov -= ( mFov - 60.0f ) * 0.025f;		
-	}*/
-//	mCam.setFov( mFov );
 	
 //	app::console() << "This camera thinks that it's looking at..." << mEye << std::endl;
-	Vec3f projectionEye = mEye;
-	projectionEye.x = mCenter.x;
-	projectionEye.y = mCenter.y;
-	float zOffset = mEye.z - mCenter.z;
-	mCam.lookAt( projectionEye, mCenter, mUp );
 
-	Vec3f bottomLeft = Vec3f(-300, -200, -zOffset);
-	Vec3f bottomRight = Vec3f(300, -200, -zOffset);
-	Vec3f topLeft = Vec3f(-300, 200, -zOffset);
+	mCam.lookAt( projectionPosition, mCenter, mUp );
+//	mCam.lookAt( mEye, mCenter, mUp );
+
+	// TODO - Refactor to support more distorted projections with the .z factor
+	//Vec3f bottomLeft = Vec3f(lowerLeftRear.x, lowerLeftRear.y, -zOffset);
+	//Vec3f bottomLeft = Vec3f(lowerLeftRear.x, lowerLeftRear.y, lowerLeftRear.z);
+	//Vec3f bottomRight = Vec3f(upperRightFront.x, lowerLeftRear.y, lowerLeftRear.z);
+	//Vec3f topLeft = Vec3f(lowerLeftRear.x, upperRightFront.y, lowerLeftRear.z);
 //	app::console() << "Camera's projection matrix" << std::endl;
 //	app::console() << mCam.getProjectionMatrix() << std::endl;
 
