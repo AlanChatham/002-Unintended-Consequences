@@ -1,0 +1,265 @@
+﻿<Window x:Class="KinectOSC.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MainWindow" Height="719" MaxHeight="755" MinHeight="230" Width="1223"  MinWidth="680" Loaded="WindowLoaded" Closing="WindowClosing"
+        ResizeMode="CanResizeWithGrip">
+    <Window.Resources>
+        <SolidColorBrush x:Key="MediumGreyBrush" Color="#ff6e6e6e"/>
+        <SolidColorBrush x:Key="KinectPurpleBrush" Color="#ff52318f"/>
+        <SolidColorBrush x:Key="KinectBlueBrush" Color="#ff00BCF2"/>
+        <Style TargetType="{x:Type CheckBox}" x:Key="SquareCheckBox" >
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type CheckBox}">
+                        <Grid>
+                            <StackPanel Orientation="Horizontal" Background="Transparent">
+                                <Grid x:Name="SquareCheckBoxChecked">
+                                    <Image x:Name="CheckedNormal" Source="Images\CheckedNormal.png" Stretch="None" HorizontalAlignment="Center"/>
+                                    <Image x:Name="CheckedHover" Source="Images\CheckedHover.png" Stretch="None" HorizontalAlignment="Center" Visibility="Collapsed"/>
+                                </Grid>
+                                <Grid x:Name="SquareCheckBoxUnchecked" Visibility="Collapsed">
+                                    <Image x:Name="UncheckedNormal" Source="Images\UncheckedNormal.png" Stretch="None" HorizontalAlignment="Center"/>
+                                    <Image x:Name="UncheckedHover" Source="Images\UncheckedHover.png" Stretch="None" HorizontalAlignment="Center" Visibility="Collapsed"/>
+                                </Grid>
+                                <TextBlock x:Name="SquareCheckBoxText" Text="{TemplateBinding Content}" TextAlignment="Left"  VerticalAlignment="Center" Foreground="{StaticResource KinectPurpleBrush}" FontSize="15"  Margin="9,0,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="false">
+                                <Setter Property="Visibility" Value="Collapsed" TargetName="SquareCheckBoxChecked"/>
+                                <Setter Property="Visibility" Value="Visible" TargetName="SquareCheckBoxUnchecked"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="false">
+                                <Setter Property="Visibility" Value="Collapsed" TargetName="SquareCheckBoxChecked"/>
+                                <Setter Property="Visibility" Value="Hidden" TargetName="SquareCheckBoxUnchecked"/>
+                                <Setter Property="Foreground" Value="DarkGray" TargetName="SquareCheckBoxText"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="true">
+                                <Setter Property="Visibility" Value="Collapsed" TargetName="CheckedNormal"/>
+                                <Setter Property="Visibility" Value="Collapsed" TargetName="UncheckedNormal"/>
+                                <Setter Property="Visibility" Value="Visible" TargetName="CheckedHover"/>
+                                <Setter Property="Visibility" Value="Visible" TargetName="UncheckedHover"/>
+                                <Setter Property="Foreground" Value="{StaticResource KinectBlueBrush}" TargetName="SquareCheckBoxText"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Name="layoutGrid" Margin="10,0,-571,0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="301"/>
+            <RowDefinition Height="202"/>
+            <RowDefinition Height="Auto" MinHeight="133"/>
+            <RowDefinition Height="Auto" MinHeight="26"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="349*" />
+            <ColumnDefinition Width="62*"/>
+            <ColumnDefinition Width="411*" />
+            <ColumnDefinition Width="0*"/>
+            <ColumnDefinition Width="411*" />
+        </Grid.ColumnDefinitions>
+        <DockPanel Grid.Row="0" Grid.ColumnSpan="5" Margin="0 0 0 20">
+            <Image DockPanel.Dock="Left" Source="Images\Logo.png" Stretch="None" Margin="0 10 0 5"/>
+            <TextBlock DockPanel.Dock="Right" VerticalAlignment="Bottom" Foreground="{StaticResource MediumGreyBrush}" FontFamily="Segoe UI" FontSize="18">Skeleton OSC</TextBlock>
+            <Image Grid.Column="1" Source="Images\Status.png" Stretch="None" HorizontalAlignment="Center" Margin="0 0 0 5"/>
+        </DockPanel>
+        <StackPanel Grid.Row="1" Grid.ColumnSpan="5" Width="1200" HorizontalAlignment="Left" Background="AntiqueWhite" Margin="0,23,0,10" Grid.RowSpan="2">
+            <Image Name="ColorImage0" Width="640" Height="480" Margin="-600,0,0,0" />
+            <Image Name="ColorImage1" Width="640" Height="480" Margin="600, -480,0,0" />
+            <Image Name="Image0" Width ="640" Height="480" Margin="-600,-480,0,0" Panel.ZIndex="100" />
+            <Image Name="Image1" Width="640" Height="480" Margin="600,-480,0,0" Panel.ZIndex="100" />
+            <TextBox ScrollViewer.HorizontalScrollBarVisibility="Auto" Visibility="Collapsed" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     Background="#BBFFFFFF" FontSize="16"  ScrollViewer.CanContentScroll="True" Height="480" HorizontalAlignment="Right" Margin="0,-480,0,0" 
+                     Name="oscViewer" VerticalAlignment="Top" Width="355" Panel.ZIndex="200" />
+            <Button Visibility="Collapsed" Name="CloseOscViewer" Content="Close" Click="CloseOscViewerClicked" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0 -480 20 0" Width="100" Height="30" 
+                    FontSize="16" Panel.ZIndex="300"></Button>
+        </StackPanel>
+        <StackPanel Grid.Row="3" Grid.ColumnSpan="2">
+            <CheckBox Style="{StaticResource SquareCheckBox}" Content="Seated Mode" IsChecked="False" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Center" 
+                  Margin="0 0 10 10" Name="checkBoxSeatedMode" Checked="CheckBoxSeatedModeChanged" Unchecked="CheckBoxSeatedModeChanged" ToolTipService.ShowDuration="12000">
+                <CheckBox.ToolTip>
+                    <ToolTip>
+                        <StackPanel>
+                            <TextBlock FontWeight="Bold">Toggle Seated Mode</TextBlock>
+                            <TextBlock>In seated mode you only get joints for the arms, hands, neck, head, spine (no legs)</TextBlock>
+                        </StackPanel>
+                    </ToolTip>
+                </CheckBox.ToolTip>
+            </CheckBox>
+            <CheckBox Style="{StaticResource SquareCheckBox}" Content="Track Nearest Only" IsChecked="False" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Center" 
+                  Margin="0 -10 10 10" Name="checkBoxTrackNearestOnly" Checked="CheckBoxTrackNearestOnlyChanged" Unchecked="CheckBoxTrackNearestOnlyChanged" ToolTipService.ShowDuration="12000">
+                <CheckBox.ToolTip>
+                    <ToolTip>
+                        <StackPanel>
+                            <TextBlock FontWeight="Bold">Toggle Track Nearest Only</TextBlock>
+                            <TextBlock>If checked: the Kinect will only track the nearest skeleton</TextBlock>
+                            <TextBlock>If unchecked: the Kinect will track two skeletons as soon as they are seen</TextBlock>
+                        </StackPanel>
+                    </ToolTip>
+                </CheckBox.ToolTip>
+            </CheckBox>
+            <CheckBox Style="{StaticResource SquareCheckBox}" IsChecked="True" Content="Show Video" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0 -10 10 10" 
+                      Name="checkBoxDrawColor" Checked="CheckBoxDrawColorChanged" Unchecked="CheckBoxDrawColorChanged">
+                <CheckBox.ToolTip>
+                    <ToolTip>
+                        <StackPanel>
+                            <TextBlock FontWeight="Bold">Toggle Video Streaming</TextBlock>
+                            <TextBlock>If checked: Video will be shown in window</TextBlock>
+                            <TextBlock>If unchecked: Video window will show the last frame frozen</TextBlock>
+                        </StackPanel>
+                    </ToolTip>
+                </CheckBox.ToolTip>
+            </CheckBox>
+            <CheckBox Style="{StaticResource SquareCheckBox}" IsChecked="True" Content="Show Skeleton" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0 -10 10 10" 
+                      Name="checkBoxShowSkeleton" Checked="CheckBoxShowSkeletonChanged" Unchecked="CheckBoxShowSkeletonChanged">
+                <CheckBox.ToolTip>
+                    <ToolTip>
+                        <StackPanel>
+                            <TextBlock FontWeight="Bold">Toggle Skeleton Drawing</TextBlock>
+                            <TextBlock>If checked: Skeletons will be drawn</TextBlock>
+                            <TextBlock>If unchecked: Skeletons will NOT be drawn</TextBlock>
+                        </StackPanel>
+                    </ToolTip>
+                </CheckBox.ToolTip>
+            </CheckBox>
+            <TextBox x:Name="HeightBox" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="135,-35,0,0" Width="60" Height="29" FontSize="16" Text="1.0" 
+            	VerticalContentAlignment="Center"/>
+        </StackPanel>
+        <StackPanel Grid.Row="3" Grid.ColumnSpan="3" Grid.Column="2">
+            <CheckBox Style="{StaticResource SquareCheckBox}" IsChecked="True" Content="OSC On" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0 0 10 10" 
+                      Name="checkBoxOscOn" Checked="CheckBoxOscOnChanged" Unchecked="CheckBoxOscOnChanged">
+                <CheckBox.ToolTip>
+                    <ToolTip>
+                        <StackPanel>
+                            <TextBlock FontWeight="Bold">Toggle OSC streaming</TextBlock>
+                            <TextBlock>If checked: OSC is streaming</TextBlock>
+                            <TextBlock>If unchecked: OSC is NOT streaming</TextBlock>
+                        </StackPanel>
+                    </ToolTip>
+                </CheckBox.ToolTip>
+            </CheckBox>
+            <TextBlock Name="OscLabel" Text="OSC Address" Margin="0,0,0,0" FontSize="14" Width="85" HorizontalAlignment="Left" ToolTipService.ShowDuration="24000">
+                <TextBlock.ToolTip>
+                    <ToolTip>
+                        <StackPanel>
+                            <TextBlock FontWeight="Bold">Set Osc Address Prefix</TextBlock>
+                            <TextBlock>Osc Address should start with a "/"</TextBlock>
+                            <TextBlock>The OSC addresses will be whatever you put here + a counter for each data point in the order of the joints and x, y, z</TextBlock>
+                            <TextBlock>This is useful for programs that have hard-coded address requirements (like Isadora)</TextBlock>
+                            <TextBlock>If you want to let the program define the addresses leave this blank</TextBlock>
+                            <TextBlock>This only applies if "Send Separately" is checked.</TextBlock>
+                            <TextBlock>Hitting the change button or the enter key will trigger the change</TextBlock>
+                        </StackPanel>
+                    </ToolTip>
+                </TextBlock.ToolTip>
+            </TextBlock>
+            <TextBox Name="OscAddress" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="85,-20,0,0" Width="110" Height="25" FontSize="16" Text="" 
+                 VerticalContentAlignment="Center" IsEnabled="false" KeyUp="OscAddressKeyUp"></TextBox>
+            <Button Name="ChangeAddress" Content="Change" Width="50" Height="25" HorizontalAlignment="Left" Click="ChangeAddressClicked" Margin="200 -25 0 0"></Button>
+            <CheckBox Style="{StaticResource SquareCheckBox}" IsChecked="False" Content="Show OSC Data" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Top" 
+                  Margin="265 -55 0 10" Name="checkBoxShowOscData" Checked="CheckBoxShowOscDataChanged" Unchecked="CheckBoxShowOscDataChanged" ToolTipService.ShowDuration="12000">
+                <CheckBox.ToolTip>
+                    <ToolTip>
+                        <StackPanel>
+                            <TextBlock FontWeight="Bold">Show OSC data window</TextBlock>
+                            <TextBlock>You can see one frame of OSC data to verify that data is working and to see the joint names</TextBlock>
+                        </StackPanel>
+                    </ToolTip>
+                </CheckBox.ToolTip>
+            </CheckBox>
+            <CheckBox Style="{StaticResource SquareCheckBox}" IsChecked="True" Content="Send Pos as %" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Top" 
+                  Margin="265 -31 0 10" Name="checkBoxSendPositionAsPercentage" Checked="CheckBoxSendPositionAsPercentageChanged" Unchecked="CheckBoxSendPositionAsPercentageChanged" ToolTipService.ShowDuration="12000">
+                <CheckBox.ToolTip>
+                    <ToolTip>
+                        <StackPanel>
+                            <TextBlock FontWeight="Bold">Send Position Values as Percentages</TextBlock>
+                            <TextBlock>If checked: The values of x and y are sent as percentage of width and height, z is in meters from the camera</TextBlock>
+                            <TextBlock>If unchecked: The values are sent raw</TextBlock>
+                            <TextBlock>Generally this is best left checked</TextBlock>
+                        </StackPanel>
+                    </ToolTip>
+                </CheckBox.ToolTip>
+            </CheckBox>
+            <CheckBox Style="{StaticResource SquareCheckBox}" IsChecked="False" Content="Send As String" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Top" 
+                  Margin="265 -10 0 10" Name="checkBoxSendAsString" Checked="CheckBoxSendAsStringChanged" Unchecked="CheckBoxSendAsStringChanged" ToolTipService.ShowDuration="12000">
+                <CheckBox.ToolTip>
+                    <ToolTip>
+                        <StackPanel>
+                            <TextBlock FontWeight="Bold">OSC data format</TextBlock>
+                            <TextBlock>If checked: OSC can be sent as one single string "Joint Name|Joint Number:x|y|z, more joints"</TextBlock>
+                            <TextBlock>If unchecked: Each joint can be sent separately as 3 floats (x, y, z) or totally separately using the checkbox below</TextBlock>
+                        </StackPanel>
+                    </ToolTip>
+                </CheckBox.ToolTip>
+            </CheckBox>
+            <CheckBox Style="{StaticResource SquareCheckBox}" IsChecked="False" Content="Send Separately" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Top" 
+                  Margin="265 -10 0 10" Name="checkBoxSendSeparately" Checked="CheckBoxSendSeparatelyChanged" Unchecked="CheckBoxSendSeparatelyChanged" ToolTipService.ShowDuration="15000" IsEnabled="True">
+                <CheckBox.ToolTip>
+                    <ToolTip>
+                        <StackPanel>
+                            <TextBlock FontWeight="Bold">Toggle Sending data separately</TextBlock>
+                            <TextBlock>If checked: OSC will be sent as individual osc data elements "/skeleton#/JointName/x/#.##" etc...</TextBlock>
+                            <TextBlock>This is useful for sending to software that can't handle osc bundles.</TextBlock>
+                            <TextBlock>If unchecked: Each joint will be sent separately as 3 floats (x, y, z)</TextBlock>
+                        </StackPanel>
+                    </ToolTip>
+                </CheckBox.ToolTip>
+            </CheckBox>
+            <TextBlock Name="PortLabel" Text="Port Number" Margin="0,-40,0,0" FontSize="14" Height="25" Width="85" HorizontalAlignment="Left" ToolTipService.ShowDuration="15000">
+                <TextBlock.ToolTip>
+                    <ToolTip>
+                        <StackPanel>
+                            <TextBlock FontWeight="Bold">Set Port Number</TextBlock>
+                            <TextBlock>Port number can be anything from 0 - 65535</TextBlock>
+                            <TextBlock>But it is recommended to use a port between 1025 and 49151</TextBlock>
+                            <TextBlock>Hitting the change button or the enter key will trigger the change</TextBlock>
+                        </StackPanel>
+                    </ToolTip>
+                </TextBlock.ToolTip>
+
+            </TextBlock>
+            <TextBox Name="OscPort" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="135,-35,0,0" Width="60" Height="25" FontSize="16" Text="7110" 
+                 VerticalContentAlignment="Center" KeyUp="OscPortKeyUp"></TextBox>
+            <Button Name="ChangePort" Content="Change" Width="50" Height="25" HorizontalAlignment="Left" Click="ChangePortClicked" Margin="200 -45 0 0"></Button>
+            <CheckBox Style="{StaticResource SquareCheckBox}" IsChecked="True" Content="Send Animata Data" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Top" 
+            	Margin="265 -10 0 10" x:Name="checkBoxSendAnimataData" Checked="CheckBoxSendAnimataData" Unchecked="CheckBoxSendSeparatelyChanged" ToolTipService.ShowDuration="15000" IsEnabled="True">
+                <CheckBox.ToolTip>
+                    <ToolTip>
+                        <StackPanel>
+                            <TextBlock FontWeight="Bold"><Run Text="Toggle Sending data separately"/></TextBlock>
+                            <TextBlock><Run Text="If checked: OSC will be sent as individual osc data elements &quot;/skeleton#/JointName/x/#.##&quot; etc..."/></TextBlock>
+                            <TextBlock><Run Text="This is useful for sending to software that can't handle osc bundles."/></TextBlock>
+                            <TextBlock><Run Text="If unchecked: Each joint will be sent separately as 3 floats (x, y, z)"/></TextBlock>
+                        </StackPanel>
+                    </ToolTip>
+                </CheckBox.ToolTip>
+            </CheckBox>
+            <TextBlock x:Name="PortLabel_Copy" Text="Animata Scaling" Margin="0,-40,0,0" FontSize="14" Height="26" Width="113" HorizontalAlignment="Left" ToolTipService.ShowDuration="15000">
+                <TextBlock.ToolTip>
+                    <ToolTip>
+                        <StackPanel>
+                            <TextBlock FontWeight="Bold"><Run Text="Set Port Number"/></TextBlock>
+                            <TextBlock><Run Text="Port number can be anything from 0 - 65535"/></TextBlock>
+                            <TextBlock><Run Text="But it is recommended to use a port between 1025 and 49151"/></TextBlock>
+                            <TextBlock><Run Text="Hitting the change button or the enter key will trigger the change"/></TextBlock>
+                        </StackPanel>
+                    </ToolTip>
+                </TextBlock.ToolTip>
+
+            </TextBlock>
+            <TextBox x:Name="AnimataScaleTextBox" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="135,-35,0,0" Width="60" Height="25" FontSize="16" Text="1.0" 
+            	VerticalContentAlignment="Center"/>
+            <Button x:Name="ChangeScale" Content="Change" Width="50" Height="25" HorizontalAlignment="Left" Click="ChangeScaleClicked" Margin="200 -45 0 0"/>
+        </StackPanel>
+        <StatusBar Grid.Row="4" Grid.ColumnSpan="3" HorizontalAlignment="Stretch" Name="statusBar" VerticalAlignment="Bottom" Background="White" Foreground="{StaticResource MediumGreyBrush}" Height="26">
+            <StatusBarItem Padding="0 0 0 10">
+                <TextBlock Name="statusBarText" Margin="0">Hover over the checkboxes and labels to see additional info.</TextBlock>
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
+</Window>
