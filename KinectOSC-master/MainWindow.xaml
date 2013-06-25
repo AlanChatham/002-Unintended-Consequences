@@ -79,57 +79,7 @@
             <Button Visibility="Collapsed" Name="CloseOscViewer" Content="Close" Click="CloseOscViewerClicked" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0 -480 20 0" Width="100" Height="30" 
                     FontSize="16" Panel.ZIndex="300"></Button>
         </StackPanel>
-        <StackPanel Grid.Row="3" Grid.ColumnSpan="2">
-            <CheckBox Style="{StaticResource SquareCheckBox}" Content="Seated Mode" IsChecked="False" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Center" 
-                  Margin="0 0 10 10" Name="checkBoxSeatedMode" Checked="CheckBoxSeatedModeChanged" Unchecked="CheckBoxSeatedModeChanged" ToolTipService.ShowDuration="12000">
-                <CheckBox.ToolTip>
-                    <ToolTip>
-                        <StackPanel>
-                            <TextBlock FontWeight="Bold">Toggle Seated Mode</TextBlock>
-                            <TextBlock>In seated mode you only get joints for the arms, hands, neck, head, spine (no legs)</TextBlock>
-                        </StackPanel>
-                    </ToolTip>
-                </CheckBox.ToolTip>
-            </CheckBox>
-            <CheckBox Style="{StaticResource SquareCheckBox}" Content="Track Nearest Only" IsChecked="False" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Center" 
-                  Margin="0 -10 10 10" Name="checkBoxTrackNearestOnly" Checked="CheckBoxTrackNearestOnlyChanged" Unchecked="CheckBoxTrackNearestOnlyChanged" ToolTipService.ShowDuration="12000">
-                <CheckBox.ToolTip>
-                    <ToolTip>
-                        <StackPanel>
-                            <TextBlock FontWeight="Bold">Toggle Track Nearest Only</TextBlock>
-                            <TextBlock>If checked: the Kinect will only track the nearest skeleton</TextBlock>
-                            <TextBlock>If unchecked: the Kinect will track two skeletons as soon as they are seen</TextBlock>
-                        </StackPanel>
-                    </ToolTip>
-                </CheckBox.ToolTip>
-            </CheckBox>
-            <CheckBox Style="{StaticResource SquareCheckBox}" IsChecked="True" Content="Show Video" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0 -10 10 10" 
-                      Name="checkBoxDrawColor" Checked="CheckBoxDrawColorChanged" Unchecked="CheckBoxDrawColorChanged">
-                <CheckBox.ToolTip>
-                    <ToolTip>
-                        <StackPanel>
-                            <TextBlock FontWeight="Bold">Toggle Video Streaming</TextBlock>
-                            <TextBlock>If checked: Video will be shown in window</TextBlock>
-                            <TextBlock>If unchecked: Video window will show the last frame frozen</TextBlock>
-                        </StackPanel>
-                    </ToolTip>
-                </CheckBox.ToolTip>
-            </CheckBox>
-            <CheckBox Style="{StaticResource SquareCheckBox}" IsChecked="True" Content="Show Skeleton" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0 -10 10 10" 
-                      Name="checkBoxShowSkeleton" Checked="CheckBoxShowSkeletonChanged" Unchecked="CheckBoxShowSkeletonChanged">
-                <CheckBox.ToolTip>
-                    <ToolTip>
-                        <StackPanel>
-                            <TextBlock FontWeight="Bold">Toggle Skeleton Drawing</TextBlock>
-                            <TextBlock>If checked: Skeletons will be drawn</TextBlock>
-                            <TextBlock>If unchecked: Skeletons will NOT be drawn</TextBlock>
-                        </StackPanel>
-                    </ToolTip>
-                </CheckBox.ToolTip>
-            </CheckBox>
-            <TextBox x:Name="HeightBox" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="135,-35,0,0" Width="60" Height="29" FontSize="16" Text="1.0" 
-            	VerticalContentAlignment="Center"/>
-        </StackPanel>
+        <StackPanel Grid.Row="2" Grid.ColumnSpan="3" Margin="10,197,582,5" Grid.RowSpan="2"/>
         <StackPanel Grid.Row="3" Grid.ColumnSpan="3" Grid.Column="2">
             <CheckBox Style="{StaticResource SquareCheckBox}" IsChecked="True" Content="OSC On" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0 0 10 10" 
                       Name="checkBoxOscOn" Checked="CheckBoxOscOnChanged" Unchecked="CheckBoxOscOnChanged">
@@ -158,6 +108,19 @@
                     </ToolTip>
                 </TextBlock.ToolTip>
             </TextBlock>
+            <CheckBox Style="{StaticResource SquareCheckBox}" IsChecked="True" Content="Send Animata Data" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Top" 
+            	Margin="265 -10 0 10" x:Name="checkBoxSendAnimataData" Checked="CheckBoxSendAnimataData" ToolTipService.ShowDuration="15000" IsEnabled="True">
+                <CheckBox.ToolTip>
+                    <ToolTip>
+                        <StackPanel>
+                            <TextBlock FontWeight="Bold"><Run Text="Toggle Sending data separately"/></TextBlock>
+                            <TextBlock><Run Text="If checked: OSC will be sent as individual osc data elements &quot;/skeleton#/JointName/x/#.##&quot; etc..."/></TextBlock>
+                            <TextBlock><Run Text="This is useful for sending to software that can't handle osc bundles."/></TextBlock>
+                            <TextBlock><Run Text="If unchecked: Each joint will be sent separately as 3 floats (x, y, z)"/></TextBlock>
+                        </StackPanel>
+                    </ToolTip>
+                </CheckBox.ToolTip>
+            </CheckBox>
             <TextBox Name="OscAddress" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="85,-20,0,0" Width="110" Height="25" FontSize="16" Text="" 
                  VerticalContentAlignment="Center" IsEnabled="false" KeyUp="OscAddressKeyUp"></TextBox>
             <Button Name="ChangeAddress" Content="Change" Width="50" Height="25" HorizontalAlignment="Left" Click="ChangeAddressClicked" Margin="200 -25 0 0"></Button>
@@ -168,44 +131,6 @@
                         <StackPanel>
                             <TextBlock FontWeight="Bold">Show OSC data window</TextBlock>
                             <TextBlock>You can see one frame of OSC data to verify that data is working and to see the joint names</TextBlock>
-                        </StackPanel>
-                    </ToolTip>
-                </CheckBox.ToolTip>
-            </CheckBox>
-            <CheckBox Style="{StaticResource SquareCheckBox}" IsChecked="True" Content="Send Pos as %" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Top" 
-                  Margin="265 -31 0 10" Name="checkBoxSendPositionAsPercentage" Checked="CheckBoxSendPositionAsPercentageChanged" Unchecked="CheckBoxSendPositionAsPercentageChanged" ToolTipService.ShowDuration="12000">
-                <CheckBox.ToolTip>
-                    <ToolTip>
-                        <StackPanel>
-                            <TextBlock FontWeight="Bold">Send Position Values as Percentages</TextBlock>
-                            <TextBlock>If checked: The values of x and y are sent as percentage of width and height, z is in meters from the camera</TextBlock>
-                            <TextBlock>If unchecked: The values are sent raw</TextBlock>
-                            <TextBlock>Generally this is best left checked</TextBlock>
-                        </StackPanel>
-                    </ToolTip>
-                </CheckBox.ToolTip>
-            </CheckBox>
-            <CheckBox Style="{StaticResource SquareCheckBox}" IsChecked="False" Content="Send As String" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Top" 
-                  Margin="265 -10 0 10" Name="checkBoxSendAsString" Checked="CheckBoxSendAsStringChanged" Unchecked="CheckBoxSendAsStringChanged" ToolTipService.ShowDuration="12000">
-                <CheckBox.ToolTip>
-                    <ToolTip>
-                        <StackPanel>
-                            <TextBlock FontWeight="Bold">OSC data format</TextBlock>
-                            <TextBlock>If checked: OSC can be sent as one single string "Joint Name|Joint Number:x|y|z, more joints"</TextBlock>
-                            <TextBlock>If unchecked: Each joint can be sent separately as 3 floats (x, y, z) or totally separately using the checkbox below</TextBlock>
-                        </StackPanel>
-                    </ToolTip>
-                </CheckBox.ToolTip>
-            </CheckBox>
-            <CheckBox Style="{StaticResource SquareCheckBox}" IsChecked="False" Content="Send Separately" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Top" 
-                  Margin="265 -10 0 10" Name="checkBoxSendSeparately" Checked="CheckBoxSendSeparatelyChanged" Unchecked="CheckBoxSendSeparatelyChanged" ToolTipService.ShowDuration="15000" IsEnabled="True">
-                <CheckBox.ToolTip>
-                    <ToolTip>
-                        <StackPanel>
-                            <TextBlock FontWeight="Bold">Toggle Sending data separately</TextBlock>
-                            <TextBlock>If checked: OSC will be sent as individual osc data elements "/skeleton#/JointName/x/#.##" etc...</TextBlock>
-                            <TextBlock>This is useful for sending to software that can't handle osc bundles.</TextBlock>
-                            <TextBlock>If unchecked: Each joint will be sent separately as 3 floats (x, y, z)</TextBlock>
                         </StackPanel>
                     </ToolTip>
                 </CheckBox.ToolTip>
@@ -226,19 +151,6 @@
             <TextBox Name="OscPort" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="135,-35,0,0" Width="60" Height="25" FontSize="16" Text="7110" 
                  VerticalContentAlignment="Center" KeyUp="OscPortKeyUp"></TextBox>
             <Button Name="ChangePort" Content="Change" Width="50" Height="25" HorizontalAlignment="Left" Click="ChangePortClicked" Margin="200 -45 0 0"></Button>
-            <CheckBox Style="{StaticResource SquareCheckBox}" IsChecked="True" Content="Send Animata Data" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Top" 
-            	Margin="265 -10 0 10" x:Name="checkBoxSendAnimataData" Checked="CheckBoxSendAnimataData" Unchecked="CheckBoxSendSeparatelyChanged" ToolTipService.ShowDuration="15000" IsEnabled="True">
-                <CheckBox.ToolTip>
-                    <ToolTip>
-                        <StackPanel>
-                            <TextBlock FontWeight="Bold"><Run Text="Toggle Sending data separately"/></TextBlock>
-                            <TextBlock><Run Text="If checked: OSC will be sent as individual osc data elements &quot;/skeleton#/JointName/x/#.##&quot; etc..."/></TextBlock>
-                            <TextBlock><Run Text="This is useful for sending to software that can't handle osc bundles."/></TextBlock>
-                            <TextBlock><Run Text="If unchecked: Each joint will be sent separately as 3 floats (x, y, z)"/></TextBlock>
-                        </StackPanel>
-                    </ToolTip>
-                </CheckBox.ToolTip>
-            </CheckBox>
             <TextBlock x:Name="PortLabel_Copy" Text="Animata Scaling" Margin="0,-40,0,0" FontSize="14" Height="26" Width="113" HorizontalAlignment="Left" ToolTipService.ShowDuration="15000">
                 <TextBlock.ToolTip>
                     <ToolTip>
