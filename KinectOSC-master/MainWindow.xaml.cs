@@ -16,6 +16,7 @@ namespace KinectOSC
     using System.Windows.Media;
     using System.Windows.Media.Imaging;
     using Microsoft.Kinect;
+    using MathNet.Numerics.LinearAlgebra.Double;
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -31,10 +32,10 @@ namespace KinectOSC
         class LocatedSensor
         {
             public KinectSensor sensor {get; set;}
-            public float x {get; set;}
-            public float y {get; set;}
-            public float z {get; set;}
-            public Vector4 frontDirection { get; set; }
+            public float xOffset {get; set;}
+            public float yOffset {get; set;}
+            public float zOffset { get; set; }
+            public DenseMatrix rotationMatrix { get; set; }
             /// <summary>
             /// A List of skeletons, with joint positions in relative orientation to the sensor
             /// </summary>
@@ -43,8 +44,6 @@ namespace KinectOSC
             /// A List of skeletons, with joint positions in a global orientation
             /// </summary>
             public List<Skeleton> globalSkeletons;
-
-            private Matrix4 rotationMatrix;
 
             public LocatedSensor() { }
 
@@ -55,13 +54,63 @@ namespace KinectOSC
             /// <param name="x">X, in global coordinates</param>
             /// <param name="y">Y, in global coordinates</param>
             /// <param name="z">Z, in global coordinates</param>
-            /// <param name="frontOrientation"></param>
-            public LocatedSensor(KinectSensor sensor, float x, float y, float z, Vector4 frontOrientation){
+            /// <param name="theta">Rotation around the vertical axis, </param>
+            public LocatedSensor(KinectSensor sensor, float x, float y, float z, 
+                                  // Was going 
+                                  //double rotationVectorX, double rotationVectorY, double rotationVectorZ,
+                                  double theta){
                 this.sensor = sensor;
-                this.x = x;
-                this.y = y;
-                this.z = z;
-                this.frontDirection = frontOrientation;
+                this.xOffset = x;
+                this.yOffset = y;
+                this.zOffset = z;
+
+                // Set up the rotation matrix
+        /*        this.rotationMatrix = new DenseMatrix(4, 4);
+                double u = rotationVectorX;
+                double u2 = Math.Pow(u, 2);
+                double v = rotationVectorY;
+                double v2 = Math.Pow(v, 2);
+                double w = rotationVectorZ;
+                double w2 = Math.Pow(w, 2);
+                double thta = theta * Math.PI / 180; // Converted to radians
+                rotationMatrix[0, 0] = u2 + (1 - u2) * Math.Cos(thta);
+                rotationMatrix[0, 1] = u * v * (1 - Math.Cos(thta)) - w * Math.Sin(thta);
+                rotationMatrix[0, 2] = u * w * (1 - Math.Cos(thta)) - v * Math.Sin(thta);
+                rotationMatrix[0, 3] = 0;
+                rotationMatrix[1, 0] = u * v * (1 - Math.Cos(thta)) - w * Math.Sin(thta);
+                rotationMatrix[1, 1] = v2 + (1 - v2) * Math.Cos(thta);
+                rotationMatrix[1, 2] = v * w * (1 - Math.Cos(thta)) - u * Math.Sin(thta);
+                rotationMatrix[1, 3] = 0;
+                rotationMatrix[2, 0] = u * w * (1 - Math.Cos(thta)) - v * Math.Sin(thta);
+                rotationMatrix[2, 2] = v * w * (1 - Math.Cos(thta)) - u * Math.Sin(thta);
+                rotationMatrix[2, 3] = w2 + (1 - w2) * Math.Cos(thta);
+                rotationMatrix[2, 3] = 0;
+                rotationMatrix[3, 0] = 0;
+                rotationMatrix[3, 1] = 0;
+                rotationMatrix[3, 2] = 0;
+                rotationMatrix[3, 3] = 1;
+          */
+
+                double thta = theta * Math.PI / 180; // Converted to radians
+                rotationMatrix = new DenseMatrix(3,3);
+                rotationMatrix[0,0] = Math.Cos(thta);
+                rotationMatrix[0,1] = 0;
+                rotationMatrix[0,2] = Math.Sin(thta);
+                rotationMatrix[1,0] = 0;
+                rotationMatrix[1,1] = 1;
+                rotationMatrix[1,2] = 0;
+                rotationMatrix[2,0] = -Math.Sin(thta);
+                rotationMatrix[2,1] = 0;
+                rotationMatrix[2,2] = Math.Cos(thta);
+
+                //Let's test it really quickly
+                DenseMatrix testMatrix = new DenseMatrix(1, 3);
+                testMatrix[0, 0] = 0;
+                testMatrix[0, 1] = 1;
+                testMatrix[0, 2] = 0;
+                Console.WriteLine(theta);
+                Console.WriteLine(testMatrix);
+                Console.WriteLine(testMatrix.Multiply(rotationMatrix));
 
                 this.relativeSkeletons = new List<Skeleton>();
                 this.globalSkeletons = new List<Skeleton>();
@@ -81,13 +130,67 @@ namespace KinectOSC
                 using (SkeletonFrame skeletonFrame = e.OpenSkeletonFrame()) {
                     if (skeletonFrame != null) {
                         // First, get the relative skeletons - easy peasy
-                        Skeleton[] skeletons = new Skeleton[skeletonFrame.SkeletonArrayLength];
-                        skeletonFrame.CopySkeletonDataTo(skeletons);
-                        this.relativeSkeletons = skeletons.ToList<Skeleton>();
+                        Skeleton[] skeletonsR = new Skeleton[skeletonFrame.SkeletonArrayLength];
+                        skeletonFrame.CopySkeletonDataTo(skeletonsR);
+                        this.relativeSkeletons = skeletonsR.ToList<Skeleton>();
 
-                        // TODO Next, apply a rotation translation to every point to get some global skeleton coordinates. Woo!
+                        // Now global skeletons...
+                        // First, clear our global skeletons list.
+                        //  We'll be building this back up from scratch here
+                        this.globalSkeletons.Clear();
+                        // Next, iterate through all the skeletons, applying a rotation and translation
+                        //  to get us into global coordinates
+                        foreach (Skeleton skel in this.relativeSkeletons) {
+                            // Add a temporary skeleton object to store transformed
+                            //  data into
+                            Skeleton tempSkel = skel;
+                            
+                            foreach (Joint j in skel.Joints){
+                                // Make a new joint, then put it into our temporary joint
+                                //  collection
+                                JointType type = j.JointType;
+                                Joint tempJoint = tempSkel.Joints[type];
+                                // Copy the current joint state
+                                JointTrackingState tracking = j.TrackingState;
+                                tempJoint.TrackingState = tracking;
 
-                        // And apply the global offset!
+                                // However, we transform the position of the joint at least
+                                SkeletonPoint shiftedPoint = new SkeletonPoint();
+                                // Rotate the points
+                                DenseMatrix point = new DenseMatrix(1, 3);
+                                point[0, 0] = j.Position.X;
+                                point[0, 1] = j.Position.Y;
+                                point[0, 2] = j.Position.Z;
+                                var rotatedPoint = point.Multiply(this.rotationMatrix);
+
+                                // Then shift them by the global coordinates.
+                                shiftedPoint.X = (float)rotatedPoint[0, 0] + this.xOffset;
+                                shiftedPoint.Y = (float)rotatedPoint[0, 1] + this.yOffset;
+                                shiftedPoint.Z = (float)rotatedPoint[0, 2] + this.zOffset;
+                                tempJoint.Position = shiftedPoint;
+
+                                tempSkel.Joints[type] = tempJoint;
+                            }
+                            // Next, alter the higher-level parameters of our skeleton
+                            SkeletonPoint shiftedPosition = new SkeletonPoint();
+                            // Rotate
+                            DenseMatrix p = new DenseMatrix(1, 3);
+                            p[0, 0] = tempSkel.Position.X;
+                            p[0, 1] = tempSkel.Position.Y;
+                            p[0, 2] = tempSkel.Position.Z;
+                            var rPoint = p.Multiply(this.rotationMatrix);
+
+                            // Then shift them by the global coordinates.
+                            shiftedPosition.X = (float)rPoint[0, 0] + this.xOffset;
+                            shiftedPosition.Y = (float)rPoint[0, 1] + this.yOffset;
+                            shiftedPosition.Z = (float)rPoint[0, 2] + this.zOffset;
+
+                            tempSkel.Position = shiftedPosition;
+
+                            // Now add that skeleton to our global skeleton list
+                            this.globalSkeletons.Add(tempSkel);
+                        }
+
                     }
                 }
             }
@@ -233,7 +336,8 @@ namespace KinectOSC
                     // Draw a transparent background to set the render size
                     dc.DrawRectangle(Brushes.Transparent, null, new Rect(0.0, 0.0, RenderWidth, RenderHeight));
                     if (this.locatedSensor.relativeSkeletons.Count > 0) {
-                        foreach (Skeleton skel in this.locatedSensor.relativeSkeletons) {
+                      //  foreach (Skeleton skel in this.locatedSensor.relativeSkeletons) {
+                        foreach (Skeleton skel in this.locatedSensor.globalSkeletons) {
                             RenderClippedEdges(skel, dc);
 
                             if (skel.TrackingState == SkeletonTrackingState.Tracked) {
@@ -579,9 +683,6 @@ namespace KinectOSC
             }
         }
 
-
-        private VisualKinectUnit Kinect0;
-
         /// <summary>
         /// Execute startup tasks
         /// </summary>
@@ -632,11 +733,11 @@ namespace KinectOSC
                         // Good to go, so count this one as connected!
                         // So let's set up some environment for this...
                         Vector4 orientation = new Vector4();
-                        locatedSensorList.Add(new LocatedSensor(potentialSensor, 0, 0, 0, orientation));
+                     /*   locatedSensorList.Add(new LocatedSensor(potentialSensor, 0, 0, 0, orientation));
                         drawingGroupList.Add(new DrawingGroup());
                         imageSourceList.Add(new DrawingImage(drawingGroupList.Last<DrawingGroup>()));
-
-                        LocatedSensor sensor = new LocatedSensor(potentialSensor, 0, 0, 0, orientation);
+                        */
+                        LocatedSensor sensor = new LocatedSensor(potentialSensor, 0, 0, 0,15);
                         if ((numberOfKinects < colorImageList.Count) && (numberOfKinects < skeletonImageList.Count)) {
                             System.Windows.Controls.Image colorImage = colorImageList[numberOfKinects];
                             System.Windows.Controls.Image skeletonImage = skeletonImageList[numberOfKinects];
