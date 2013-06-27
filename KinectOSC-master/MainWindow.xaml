@@ -69,10 +69,14 @@
             <Image Grid.Column="1" Source="Images\Status.png" Stretch="None" HorizontalAlignment="Center" Margin="0 0 0 5"/>
         </DockPanel>
         <StackPanel Grid.Row="1" Grid.ColumnSpan="5" Width="1200" HorizontalAlignment="Left" Background="AntiqueWhite" Margin="0,23,0,10" Grid.RowSpan="2">
-            <Image Name="ColorImage0" Width="640" Height="480" Margin="-600,0,0,0" />
-            <Image Name="ColorImage1" Width="640" Height="480" Margin="600, -480,0,0" />
-            <Image Name="Image0" Width ="640" Height="480" Margin="-600,-480,0,0" Panel.ZIndex="100" />
-            <Image Name="Image1" Width="640" Height="480" Margin="600,-480,0,0" Panel.ZIndex="100" />
+            <Image Name="ColorImage0" Width="320" Height="240" Margin="-880,0,0,0" />
+            <Image Name="ColorImage1" Width="320" Height="240" Margin="-240, -240,0,0" />
+            <Image Name="ColorImage2" Width="320" Height="240" Margin="240, -240,0,0" />
+            <Image Name="ColorImage3" Width="320" Height="240" Margin="880, -240,0,0" />
+            <Image Name="Image0" Width ="320" Height="240" Margin="-880,-240,0,0" Panel.ZIndex="100" />
+            <Image Name="Image1" Width="320" Height="240" Margin="-240,-240,0,0" Panel.ZIndex="100" />
+            <Image Name="Image2" Width="320" Height="240" Margin="240,-240,0,0" Panel.ZIndex="100" />
+            <Image Name="Image3" Width="320" Height="240" Margin="880,-240,0,0" Panel.ZIndex="100" />
             <TextBox ScrollViewer.HorizontalScrollBarVisibility="Auto" Visibility="Collapsed" ScrollViewer.VerticalScrollBarVisibility="Auto"
                      Background="#BBFFFFFF" FontSize="16"  ScrollViewer.CanContentScroll="True" Height="480" HorizontalAlignment="Right" Margin="0,-480,0,0" 
                      Name="oscViewer" VerticalAlignment="Top" Width="355" Panel.ZIndex="200" />

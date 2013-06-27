@@ -23,12 +23,6 @@ namespace KinectOSC
     /// </summary>
     public partial class MainWindow : Window
     {
-
-        // Ugly code, fuck it.
-        private int[] SkeletonArray0 = new int[6];
-        private int[] SkeletonArray1 = new int[6];
-
-
         class LocatedSensor
         {
             public KinectSensor sensor {get; set;}
@@ -102,15 +96,6 @@ namespace KinectOSC
                 rotationMatrix[2,0] = -Math.Sin(thta);
                 rotationMatrix[2,1] = 0;
                 rotationMatrix[2,2] = Math.Cos(thta);
-
-                //Let's test it really quickly
-                DenseMatrix testMatrix = new DenseMatrix(1, 3);
-                testMatrix[0, 0] = 0;
-                testMatrix[0, 1] = 1;
-                testMatrix[0, 2] = 0;
-                Console.WriteLine(theta);
-                Console.WriteLine(testMatrix);
-                Console.WriteLine(testMatrix.Multiply(rotationMatrix));
 
                 this.relativeSkeletons = new List<Skeleton>();
                 this.globalSkeletons = new List<Skeleton>();
@@ -276,13 +261,10 @@ namespace KinectOSC
                 // Set up the basics for drawing a skeleton
                 // Create the drawing group we'll use for drawing
                 this.drawingGroup = new DrawingGroup();
-
                 // Create an image source that we can use in our image control
                 this.imageSource = new DrawingImage(this.drawingGroup);
-
                 // Turn on the skeleton stream to receive skeleton frames
                 locatedSensor.sensor.SkeletonStream.Enable();
-               
                 // Turn on the color stream to receive color frames
                 locatedSensor.sensor.ColorStream.Enable(ColorImageFormat.RgbResolution640x480Fps30);
 
@@ -334,7 +316,7 @@ namespace KinectOSC
                 using (DrawingContext dc = this.drawingGroup.Open()) {
                     bool noTrackedSkeletons = true;
                     // Draw a transparent background to set the render size
-                    dc.DrawRectangle(Brushes.Transparent, null, new Rect(0.0, 0.0, RenderWidth, RenderHeight));
+                    dc.DrawRectangle(Brushes.Transparent, null, new Rect(0.0, 0.0, this.skeletonDrawingImage.Width, this.skeletonDrawingImage.Height));
                     if (this.locatedSensor.relativeSkeletons.Count > 0) {
                       //  foreach (Skeleton skel in this.locatedSensor.relativeSkeletons) {
                         foreach (Skeleton skel in this.locatedSensor.globalSkeletons) {
@@ -359,7 +341,7 @@ namespace KinectOSC
                         }
                     }
                     // prevent drawing outside of our render area
-                    this.drawingGroup.ClipGeometry = new RectangleGeometry(new Rect(0.0, 0.0, RenderWidth, RenderHeight));
+                    this.drawingGroup.ClipGeometry = new RectangleGeometry(new Rect(0.0, 0.0, this.skeletonDrawingImage.Width, this.skeletonDrawingImage.Height));
                 }
             }
             /// <summary>
@@ -401,8 +383,6 @@ namespace KinectOSC
             /// <param name="skeleton">skeleton to draw</param>
             /// <param name="drawingContext">drawing context to draw to</param>
             private void DrawBonesAndJoints(Skeleton skeleton, DrawingContext drawingContext) {
-
-                Console.WriteLine("DrawBonesandJoints called");
                 // Render Torso
                 this.DrawBone(skeleton, drawingContext, JointType.Head, JointType.ShoulderCenter);
                 this.DrawBone(skeleton, drawingContext, JointType.ShoulderCenter, JointType.ShoulderLeft);
@@ -461,7 +441,10 @@ namespace KinectOSC
                 DepthImagePoint depthPoint = this.locatedSensor.sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(
                                                                                  skelpoint,
                                                                                  DepthImageFormat.Resolution640x480Fps30);
-                return new Point(depthPoint.X, depthPoint.Y);
+                // Now adjust that point by the actual size of our drawing image
+                double imageWidthRatio = this.skeletonDrawingImage.Width / 640;
+                double imageHeightRatio = this.skeletonDrawingImage.Height / 480;
+                return new Point(depthPoint.X * imageWidthRatio, depthPoint.Y * imageHeightRatio);
             }
 
             /// <summary>
@@ -498,16 +481,12 @@ namespace KinectOSC
         }
 
         #region Global Settings
-        /// <summary>
-        /// Width of output drawing
-        /// </summary>
-        private const float RenderWidth = 640.0f;
 
-        /// <summary>
-        /// Height of our output drawing
-        /// </summary>
-        private const float RenderHeight = 480.0f;
-
+        float[] kinectXPositions = { 0f, -2.28f, -2.5f, -2.5f }; // X is positive left, if looking at the screen
+        float[] kinectYPositions = { 0, 0, 0, 0 }; // Y is positive up
+        float[] kinectZPositions = { 2.5f, 2.5f, 2.2f, 0.68f }; // Z is positive towards the screen, so offsets will usually be positive
+        float[] kinectAngles = { 00, 0, 90, 90 };
+ 
         /// <summary>
         /// Thickness of drawn joint lines
         /// </summary>
@@ -564,29 +543,9 @@ namespace KinectOSC
         private bool showOscData = false;
 
         /// <summary>
-        /// If this is true the OSC data will be sent as a single string; else it will be sent as bundles of floats (x, y, z) for each joint
-        /// </summary>
-        private bool sendOscAsString = false;
-
-        /// <summary>
         /// If this is true the skeleton will be drawn on screen
         /// </summary>
         private bool showSkeleton = false;
-
-        /// <summary>
-        /// If this is true then only the skeleton nearest the kinect will be tracked
-        /// </summary>
-        private bool trackNearestOnly = false;
-
-        /// <summary>
-        /// If this is true then the positions of the joints will be sent as percentages of the width and height
-        /// </summary>
-        private bool sendPositionsAsPercentage = true;
-
-        /// <summary>
-        /// If this is true then each variable of each of the joints will be sent separately (each osc element will have one float)
-        /// </summary>
-        private bool sendAllSeparately = false;
 
         /// <summary>
         /// Flag to choose to send data specifically in a format that Animata will appreciate
@@ -607,35 +566,11 @@ namespace KinectOSC
         /// Active Kinect sensor
         /// </summary>
         private List<VisualKinectUnit> visualKinectUnitList;
-        private List<LocatedSensor> locatedSensorList;
-        private LocatedSensor sensor0;
-        private KinectSensor sensor1;
 
         private List<System.Windows.Controls.Image> skeletonImageList;
         private List<System.Windows.Controls.Image> colorImageList;
 
-        /// <summary>
-        /// Drawing group for skeleton rendering output
-        /// </summary>
-        private List<DrawingGroup> drawingGroupList;
-        private DrawingGroup drawingGroup0;
-        private DrawingGroup drawingGroup1;
-
-        /// <summary>
-        /// Drawing image that we will display
-        /// </summary>
-        private List<DrawingImage> imageSourceList;
-        private DrawingImage imageSource0;
-        private DrawingImage imageSource1;
-
-        /// <summary>
-        /// Bitmap that will hold color information
-        /// </summary>
-        private List<WriteableBitmap> colorBitmapList;
-        private WriteableBitmap colorBitmap0;
-        private WriteableBitmap colorBitmap1;
-
-        // OSC 
+           // OSC 
         private static UdpWriter oscWriter;
         private static string[] oscArgs = new string[2];
 
@@ -651,39 +586,6 @@ namespace KinectOSC
 
 
         /// <summary>
-        /// Draws indicators to show which edges are clipping skeleton data
-        /// </summary>
-        /// <param name="skeleton">skeleton to draw clipping information for</param>
-        /// <param name="drawingContext">drawing context to draw to</param>
-        private static void RenderClippedEdges(Skeleton skeleton, DrawingContext drawingContext)
-        {
-            if (skeleton.ClippedEdges.HasFlag(FrameEdges.Bottom)) {
-                drawingContext.DrawRectangle(
-                    Brushes.Red,
-                    null,
-                    new Rect(0, RenderHeight - ClipBoundsThickness, RenderWidth, ClipBoundsThickness));
-            }     
-            if (skeleton.ClippedEdges.HasFlag(FrameEdges.Top)){
-                drawingContext.DrawRectangle(
-                    Brushes.Red,
-                    null,
-                    new Rect(0, 0, RenderWidth, ClipBoundsThickness));
-            }
-            if (skeleton.ClippedEdges.HasFlag(FrameEdges.Left)) {
-                drawingContext.DrawRectangle(
-                    Brushes.Red,
-                    null,
-                    new Rect(0, 0, ClipBoundsThickness, RenderHeight));
-            }
-            if (skeleton.ClippedEdges.HasFlag(FrameEdges.Right)) {
-                drawingContext.DrawRectangle(
-                    Brushes.Red,
-                    null,
-                    new Rect(RenderWidth - ClipBoundsThickness, 0, ClipBoundsThickness, RenderHeight));
-            }
-        }
-
-        /// <summary>
         /// Execute startup tasks
         /// </summary>
         /// <param name="sender">object sending the event</param>
@@ -694,31 +596,25 @@ namespace KinectOSC
             oscArgs[1] = OscPort.Text;
             oscWriter = new UdpWriter(oscArgs[0], Convert.ToInt32(oscArgs[1]));
             // Initialize Data viewer
-            oscViewer.Text = "\nData will be shown here\nwhen there is a skeleton\nbeing tracked.";
-
-            // Create the drawing group we'll use for drawing
-            this.drawingGroup0 = new DrawingGroup();
-            this.drawingGroup1 = new DrawingGroup();
-
-            // Create an image source that we can use in our image control
-            this.imageSource0 = new DrawingImage(this.drawingGroup0);
-            this.imageSource1 = new DrawingImage(this.drawingGroup1);
-
+            oscViewer.Text = "\nData will be shown here\nwhen there is a skeleton\nbeing tracked.";  
 
             // Set up our lists
             visualKinectUnitList = new List<VisualKinectUnit>();
+
             skeletonImageList = new List<System.Windows.Controls.Image>();
             skeletonImageList.Add(Image0);
             skeletonImageList.Add(Image1);
+            skeletonImageList.Add(Image2);
+            skeletonImageList.Add(Image3);
 
             colorImageList = new List<System.Windows.Controls.Image>();
             colorImageList.Add(ColorImage0);
             colorImageList.Add(ColorImage1);
+            colorImageList.Add(ColorImage2);
+            colorImageList.Add(ColorImage3);
 
-            locatedSensorList = new List<LocatedSensor>();
-            drawingGroupList = new List<DrawingGroup>();
-            imageSourceList = new List<DrawingImage>();
-            colorBitmapList = new List<WriteableBitmap>();
+            masterSkeletonList = new List<Skeleton>();
+            leadSkeletonIDs = new List<int>();
 
             // Look through all sensors and start the first connected one.
             // This requires that a Kinect is connected at the time of app startup.
@@ -732,27 +628,118 @@ namespace KinectOSC
                         potentialSensor.Start();
                         // Good to go, so count this one as connected!
                         // So let's set up some environment for this...
-                        Vector4 orientation = new Vector4();
-                     /*   locatedSensorList.Add(new LocatedSensor(potentialSensor, 0, 0, 0, orientation));
-                        drawingGroupList.Add(new DrawingGroup());
-                        imageSourceList.Add(new DrawingImage(drawingGroupList.Last<DrawingGroup>()));
-                        */
-                        LocatedSensor sensor = new LocatedSensor(potentialSensor, 0, 0, 0,15);
+                       
+                        LocatedSensor sensor = new LocatedSensor(potentialSensor, kinectXPositions[numberOfKinects],
+                                                                                  kinectYPositions[numberOfKinects],
+                                                                                  kinectZPositions[numberOfKinects],
+                                                                                  kinectAngles[numberOfKinects]);
                         if ((numberOfKinects < colorImageList.Count) && (numberOfKinects < skeletonImageList.Count)) {
                             System.Windows.Controls.Image colorImage = colorImageList[numberOfKinects];
                             System.Windows.Controls.Image skeletonImage = skeletonImageList[numberOfKinects];
-                            visualKinectUnitList.Add(new VisualKinectUnit(sensor, skeletonImage, colorImage));
+                            VisualKinectUnit newSensor = new VisualKinectUnit(sensor, skeletonImage, colorImage);
+                            // Add a callback to our updateSkeletons function, so every frameReady event,
+                            //  we update our global list of skeletons
+                            newSensor.locatedSensor.sensor.SkeletonFrameReady += updateSkeletons;
+
+                            newSensor.locatedSensor.sensor.SkeletonFrameReady += sendOSCHeadOnly;
+                            visualKinectUnitList.Add(newSensor);
                         }
                         else {
                             visualKinectUnitList.Add(new VisualKinectUnit(sensor));
                         }
                         numberOfKinects++;
+                        Console.WriteLine("Number of Kinects : " + numberOfKinects);
                     }
                     catch (IOException) {
                         Console.WriteLine("Couldn't start one of the Kinect sensors...");
                     }
                 }
             }
+        }
+
+     
+        /// <summary>
+        /// This list holds all the skeletons seen by all sensors,
+        ///  with position data in the global coordinate frame
+        /// We trust that there won't be a conflict between random
+        ///  IDs assigned by kinect sensors
+        /// </summary>
+        private List<Skeleton> masterSkeletonList;
+        /// <summary>
+        /// Skeletons within this radius of each other will be assumed
+        ///  to be the same skeleton
+        /// </summary>
+        private float sameSkeletonRadius = 1.0f;
+
+        private List<int> leadSkeletonIDs;
+
+        private void updateSkeletons(object sender, SkeletonFrameReadyEventArgs e) {
+            masterSkeletonList = new List<Skeleton>();
+            List<int> currentSkeletonIDs = new List<int>();
+            // From each of our kinect sensors...
+            foreach (VisualKinectUnit kinect in this.visualKinectUnitList){
+                // Read all our skeleton data
+                foreach (Skeleton skel in kinect.locatedSensor.globalSkeletons){
+                    // And if the skeleton is being tracked...
+                    if (skel.TrackingState == SkeletonTrackingState.Tracked) {
+                        currentSkeletonIDs.Add(skel.TrackingId);
+                        bool isInMasterList = false;
+                        // if it's in our master list already, 
+                        for( int i = 0; i < masterSkeletonList.Count; i++) {
+                            // update the skeleton to the fresh data
+                            if (skel.TrackingId == masterSkeletonList[i].TrackingId) {
+                                masterSkeletonList[i] = skel;
+                                isInMasterList = true;
+                                break;
+                            }
+                        }
+                        if (!isInMasterList) {
+                            masterSkeletonList.Add(skel);
+                        }
+                    }
+                }
+            }
+//            Console.WriteLine("Size of master list: " + masterSkeletonList.Count);
+            // Now, make sure we remove extra IDs of skeletons that aren't in our view anymore
+            for (int i = leadSkeletonIDs.Count - 1; i >= 0; i--) {
+                if (currentSkeletonIDs.Find(item => item == leadSkeletonIDs[i]) == 0) {
+                    leadSkeletonIDs.RemoveAt(i);
+                }
+            }
+
+            // Now let's pick a skeleton to persistently follow if we're not following one
+            if (leadSkeletonIDs.Count == 0 && currentSkeletonIDs.Count > 0) {
+                leadSkeletonIDs.Add(currentSkeletonIDs[0]);
+            }
+
+            // And let's find duplicate skeletons that are our lead skeletons
+            if (leadSkeletonIDs.Count > 0) {
+                Skeleton trackedSkeleton = new Skeleton();
+                // Find our tracked skeleton
+                foreach (Skeleton skel in masterSkeletonList) {
+                    if ((skel.TrackingState == SkeletonTrackingState.Tracked ) && (currentSkeletonIDs.Find(id => id == skel.TrackingId) != 0) ){
+                        trackedSkeleton = skel;
+                        break;
+                    }
+                }
+                // Iterate through it agian, since we might have missed it the first time
+                foreach (Skeleton skel in masterSkeletonList) {
+                    if ((skel.TrackingState == SkeletonTrackingState.Tracked) && 
+                        skel.Position.X < trackedSkeleton.Position.X + sameSkeletonRadius &&
+                        skel.Position.X > trackedSkeleton.Position.X - sameSkeletonRadius &&
+                        skel.Position.Z < trackedSkeleton.Position.Z + sameSkeletonRadius &&
+                        skel.Position.Z > trackedSkeleton.Position.Z - sameSkeletonRadius &&
+                        skel != trackedSkeleton)
+                    {
+                        if (leadSkeletonIDs.Find(item => item == skel.TrackingId) == 0)
+                            leadSkeletonIDs.Add(skel.TrackingId);
+                    }
+                }
+            }
+  //          Console.Write("currentSkeletonIDs: ");
+  //          Console.WriteLine(currentSkeletonIDs.Count);
+  //          Console.Write("currentLeadSkeletonIDs: ");
+ //           Console.WriteLine(leadSkeletonIDs.Count);
         }
 
         /// <summary>
@@ -767,43 +754,11 @@ namespace KinectOSC
             }
         }
 
-        /// <summary>
-        /// Set kinect to track the closest skeleton
-        /// </summary>
-        private void TrackClosestSkeleton(IEnumerable<Skeleton> skeletonData)
-        {
-            if (this.sensor0.sensor != null && this.sensor0.sensor.SkeletonStream != null)
-            {
-                if (!this.sensor0.sensor.SkeletonStream.AppChoosesSkeletons)
-                {
-                    this.sensor0.sensor.SkeletonStream.AppChoosesSkeletons = true; // Ensure app chooses skeletons is set
-                }
-
-                float closestDistance = 10000f; // Start with a far enough distance
-                int closestID = 0;
-
-                foreach (Skeleton skeleton in skeletonData.Where(s => s.TrackingState != SkeletonTrackingState.NotTracked))
-                {
-                    if (skeleton.Position.Z < closestDistance)
-                    {
-                        closestID = skeleton.TrackingId;
-                        closestDistance = skeleton.Position.Z;
-                    }
-                }
-
-                if (closestID > 0)
-                {
-                    this.sensor0.sensor.SkeletonStream.ChooseSkeletons(closestID); // Track this skeleton
-                }
-            }
-        }
-
-
         private int sendOSC(int counter, Skeleton skel) {
             var elements = new List<OscElement>();
             var oscText = "";
             if (sendAnimataData){
-                oscText = sendOSCHeadOnly(counter, skel, oscText);
+                //oscText = sendOSCHeadOnly(counter, skel, oscText);
             }
             
             if (showOscData) {
@@ -813,18 +768,33 @@ namespace KinectOSC
             return counter;
         }
 
-        private string sendOSCHeadOnly(int counter, Skeleton skel, string oscText)
+        private void sendOSCHeadOnly(object sender, SkeletonFrameReadyEventArgs e)
         {
+            // If there isn't a skeleton we want to send, we don't send anything
+            if (leadSkeletonIDs.Count == 0)
+                return;
+            Skeleton skel = new Skeleton();
+            skel = null;
+            // Get the skeleton we want to send
+            foreach (Skeleton s in masterSkeletonList) {
+                if (s.TrackingId == leadSkeletonIDs[0]) {
+                    skel = s;
+                }
+            }
+            // Just in case, if we didn't find a skeleton, get out of here
+            if (skel == null) {
+                Console.WriteLine("Had skeletons in our leadSkeletonIDs list, but couldn't find the appropriate skeleton... How odd.");
+                return;
+            }
             double playerHeight = skeletonHeight(skel);
             // joints bundled individually as 2 floats (x, y)
             Joint headJoint = skel.Joints[JointType.Head];
 
-            string jointName =  "s" + counter + headJoint.JointType.ToString();
-            var jointElement = new List<OscElement>();
+           var jointElement = new List<OscElement>();
                 
             // Joint positions are returned in meters, so we'll assume a 2 meter tall person
             // and scale that range to pixels for the animation
-            Point origin = new Point(0, 0); // Offset in meters to map our origin to the characters
+          /*  Point origin = new Point(0, 0); // Offset in meters to map our origin to the characters
             int characterHeight = 600;
             int characterWidth = 900;
             double playerHeightRatio = 2 / (playerHeight + .2);
@@ -836,19 +806,28 @@ namespace KinectOSC
             jointY = (float)Math.Round(jointY, 4);
             jointElement.Add(new OscElement(
                                     "/head",
-                                    (float)Math.Round(jointX, 4), (float)Math.Round(jointY, 4), 
-                                    (float)Math.Round(jointZ,4)));
+                                    (float)Math.Round(jointX, 4), (float)Math.Round(jointY, 4),
+                                    (float)Math.Round(jointZ, 4)));
+           */
+           var jointX = headJoint.Position.X;
+           var jointY = headJoint.Position.Y;
+           var jointZ = headJoint.Position.Z;
+            jointElement.Add(new OscElement(
+                                    "/head",
+                                    (float)Math.Round(jointX, 4), (float)Math.Round(jointY, 4),
+                                    (float)Math.Round(jointZ, 4)));
             oscWriter.Send(new OscBundle(DateTime.Now, jointElement.ToArray()));
                 
             if (showOscData)
             {
-                oscText += "\n\n" + jointName + " " +
+                string oscText = "\n\n/head " +
                            (float)Math.Round(jointX, 2) + " " +
                            (float)Math.Round(jointY, 2) + " " +
                                     (float)Math.Round(jointZ, 2);
+                oscViewer.Text =  oscText;
             }
             
-            return oscText;
+            
         }
 
         private String GenerateOscDataDump(int counter, string jointName, SkeletonPoint jointPoint)
