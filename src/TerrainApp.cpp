@@ -24,8 +24,8 @@ using namespace ci;
 using namespace ci::app;
 using namespace std;
 
-#define APP_WIDTH		600 //1024
-#define APP_HEIGHT		400//512 //720
+#define APP_WIDTH		2560//1024
+#define APP_HEIGHT		720
 #define ROOM_FBO_RES	2
 #define FBO_SIZE		512 // This is the size of the frame buffer. The reaction diffusion gets set by this somehow, and gets mapped onto the terrain at a fbo_size/app_width ratio
 #define VBO_SIZE		600 //600 // This is the size of the vertex mesh. It should be the same size as the room
@@ -54,7 +54,7 @@ class TerrainApp : public AppBasic {
 	void			drawInfoPanel();
 	void			createNewWindow();
 	void			checkOSCMessage(const osc::Message*);
-	void			setCameras(Vec3f headPosition);
+	void			setCameras(Vec3f headPosition, bool fromKeyboard);
 	void 			adjustProjection(Vec3f bottomLeft, Vec3f bottomRight, Vec3f topLeft, Vec3f eyePos, float n, float f);
 
 	
@@ -128,8 +128,8 @@ class TerrainApp : public AppBasic {
 void TerrainApp::prepareSettings( Settings *settings )
 {
 	settings->setWindowSize( APP_WIDTH, APP_HEIGHT );
-	//settings->setBorderless( true );
-	settings->setBorderless( false );
+	settings->setBorderless( true );
+	settings->setWindowPos(0,0);
 }
 
 void TerrainApp::checkOSCMessage(const osc::Message * message){
@@ -140,29 +140,26 @@ void TerrainApp::checkOSCMessage(const osc::Message * message){
 		float headY = message->getArgAsFloat(1);
 		float headZ = message->getArgAsFloat(2);
 
-		setCameras(Vec3f(headX, headY, headZ));
+		setCameras(Vec3f(headX, headY, headZ), false);
 	}
 }
 
-void TerrainApp::setCameras(Vec3f headPosition){
+void TerrainApp::setCameras(Vec3f headPosition, bool fromKeyboard = false){
 	// Separate out the components	
 	float headX = headPosition.x;
 	float headY = headPosition.y;
 	float headZ = headPosition.z;
 	
 	// Adjust these away from the wonky coordinates we get from the Kinect,
-	//  then normalize them so that they're in units of 100px per foot,
-	//  then shift them so that the origin is at the corner where the two meet
-/*	headX = ((3 * (headX )) / 5) - 600 + (ROOM_DEPTH / 2);
-	headY = (3 * headY ) / 5 + 150;
-	headZ = (headZ * 3.28f * 50); // Seems like we're doing 100px per foot
+	//  then normalize them so that they're in units of 100px per foot
 
-	float screenKinectDistance = 450;
-	headZ = screenKinectDistance + headZ + (ROOM_DEPTH / 2);
-	*/
-	float xOffset = 300;
-	headX += xOffset;
-
+	if (!fromKeyboard){
+	//3.28 feet in a meter
+		headX = headX * 3.28f * 100;
+		headY = headY * 3.28f * 100 - ( ROOM_HEIGHT / 3 ); // Offset to bring up the vertical position of the eye
+		headZ = headZ * 3.28f * 100;
+	}
+	
 	// Make sure that the cameras are located somewhere in front of the screens
 	//  Orientation is   X
 	//                   |        ------> Screen 2 x axis
@@ -176,19 +173,19 @@ void TerrainApp::setCameras(Vec3f headPosition){
 	//console() << "headX: " << headX << std::endl;
 	//console() << "headZ: " << headZ << std::endl;
 
-//	if (headZ > 0){
-		mHeadCam0.setEye(Vec3f(headX - xOffset, headY, headZ));
-//	}
-	//else{
-//		mHeadCam0.mEye = Vec3f(0,0,1200);
-	//}
-	//if (headX < 0){
+	if (headZ > ROOM_DEPTH / 2){
+		mHeadCam0.setEye(Vec3f(headX, headY, headZ));
+	}
+	else{
+		mHeadCam0.mEye = Vec3f(0,0,1200);
+	}
+	if (headX < -ROOM_WIDTH / 2){
 		// headZ is negative here since that axis is backwards on Screen 2
-		mHeadCam1.setEye(Vec3f(headX - xOffset, headY, headZ));
-	//}
-	//else{
-	//	mHeadCam1.mEye = Vec3f(-1200,0,0);
-	//}
+		mHeadCam1.setEye(Vec3f(headX, headY, headZ));
+	}
+	else{
+		mHeadCam1.mEye = Vec3f(-1200,0,0);
+	}
 }
 
 
@@ -201,24 +198,17 @@ void TerrainApp::setup()
 	mFbo1 = gl::Fbo(APP_WIDTH / 2, APP_HEIGHT / 2);
 	
 	// Setup the camera for the main window
-	mHeadCam0 = HeadCam( 1200.0f, getWindowAspectRatio() );
+	mHeadCam0 = HeadCam( 1210.0f, getWindowAspectRatio() );
 	mHeadCam0.mEye = Vec3f(-1200,0,1200);
 	mHeadCam0.mEye.y = 0;
 	mHeadCam0.mCenter = Vec3f(0,0, ROOM_DEPTH / 2 );
 
 	mHeadCam1 = HeadCam( 1200.0f, getWindowAspectRatio() );
-	mHeadCam1.mEye = Vec3f(-1200,0,0);
+	mHeadCam1.mEye = Vec3f(-1210,0,0);
 	mHeadCam1.mCenter = Vec3f(-ROOM_WIDTH / 2, 0, 0 );
 
-
-	//getWindow()->setUserData(&mHeadCam1);
-
-	//setCameras(Vec3f(-1200,0,0));
-	// And create a new window with stuff too
-//	createNewWindow();
-
 	// Set up a listener for OSC messages
-////	oscListener.setup(7110);
+	oscListener.setup(7110);
 
 	// LOAD SHADERS
 	try {
@@ -259,7 +249,6 @@ void TerrainApp::setup()
 	bool isGravityOn	= true;
 	// Build us a room of a certain size
 	mRoom				= Room( Vec3f( ROOM_WIDTH / 2, ROOM_HEIGHT / 2, ROOM_DEPTH / 2 ), isPowerOn, isGravityOn );	
-	//mRoom				= Room( Vec3f( 800.0f, 200.0f, 800.0f ), isPowerOn, isGravityOn );	
 	mRoomBackWallTex	= gl::Texture( loadImage( loadResource( BACK_WALL_TEX_ID ) ) );
 	mRoomLeftWallTex	= gl::Texture( loadImage( loadResource( WALL_TEX_ID ) ) );
 	mRoomRightWallTex	= gl::Texture( loadImage( loadResource( WALL_TEX_ID ) ) );
@@ -297,7 +286,7 @@ void TerrainApp::setup()
 	mSphere.setCenter( mSpherePosDest );
 	mSphere.setRadius( 20.0f );
 
-	for (int i = 0; i < 3; i++){
+	/*for (int i = 0; i < 3; i++){
 		for (int j = 0; j < 3; j++){
 			for (int k = 0; k < 3; k++){
 				Sphere newSphere;
@@ -306,8 +295,16 @@ void TerrainApp::setup()
 				mRandomSpheres.push_back(newSphere);
 			}
 		}
-	}
-	
+	}*/
+	Sphere newSphere;
+	newSphere.setCenter(Vec3f(0, (ROOM_HEIGHT / 2), ROOM_DEPTH));
+	newSphere.setRadius(30.0f);
+	mRandomSpheres.push_back(newSphere);
+	Sphere newSphere2;
+	newSphere2.setCenter(Vec3f(-ROOM_WIDTH, (ROOM_HEIGHT / 2), 0));
+	newSphere2.setRadius(30.0f);
+	mRandomSpheres.push_back(newSphere2);
+
 	// MOUSE
 	mMouseRightPos	= getWindowCenter();
 	mMousePos		= Vec2f::zero();
@@ -322,7 +319,7 @@ void TerrainApp::setup()
 
 void TerrainApp::mouseDown( MouseEvent event )
 {
-	mMouseDownPos = event.getPos();
+/*	mMouseDownPos = event.getPos();
 	mMouseOffset = Vec2f::zero();
 	
 	if( event.isLeft() ){
@@ -332,12 +329,12 @@ void TerrainApp::mouseDown( MouseEvent event )
 	if( event.isRight() ){
 		mMouseRightDown = true;
 		mMouseRightPos	= getWindowSize() - event.getPos();
-	}
+	}*/
 }
 
 void TerrainApp::mouseUp( MouseEvent event )
 {
-	if( event.isLeft() ){
+/*	if( event.isLeft() ){
 		mMouseLeftDown = false;
 	}
 	
@@ -347,20 +344,21 @@ void TerrainApp::mouseUp( MouseEvent event )
 	}
 	
 	mMouseOffset = Vec2f::zero();
+	*/
 }
 
 void TerrainApp::mouseMove( MouseEvent event )
-{
+{/*
 	mMousePos = event.getPos();
 	if( event.isRight() )
 		mMouseRightPos	= getWindowSize() - event.getPos();
-}
+*/}
 
 void TerrainApp::mouseDrag( MouseEvent event )
-{
+{/*
 	mouseMove( event );
 	mMouseOffset = ( mMousePos - mMouseDownPos ) * 0.7f;
-}
+*/}
 
 void TerrainApp::mouseWheel( MouseEvent event )
 {
@@ -378,7 +376,8 @@ void TerrainApp::keyDown( KeyEvent event )
 {
 	switch ( event.getChar() ) {
 		case ' ':	mRoom.togglePower();
-					mHeadCam0.setPreset( 1 );	break;
+					//mHeadCam0.setPreset( 1 );
+					break;
 		case 'f':	mRd.mParamF += 0.001f;		break;
 		case 'F':	mRd.mParamF -= 0.001f;		break;
 		case 'k':	mRd.mParamK += 0.001f;		break;
@@ -401,15 +400,15 @@ void TerrainApp::keyDown( KeyEvent event )
 	
 	switch( event.getCode() ){
 		//case KeyEvent::KEY_UP:		mMouseRightPos = Vec2f( 222.0f, 205.0f ) + getWindowCenter();	break;
-		case KeyEvent::KEY_UP:		setCameras(Vec3f(mHeadCam0.mEye.x, mHeadCam0.mEye.y, mHeadCam0.mEye.z - 100));
+		case KeyEvent::KEY_UP:		setCameras(Vec3f(mHeadCam0.mEye.x + 1, mHeadCam0.mEye.y, mHeadCam0.mEye.z - 100), true);
 									break;
 		//case KeyEvent::KEY_LEFT:	mMouseRightPos = Vec2f(-128.0f,-178.0f ) + getWindowCenter();	break;
-		case KeyEvent::KEY_LEFT:	setCameras(Vec3f(mHeadCam0.mEye.x - 100, mHeadCam0.mEye.y, mHeadCam0.mEye.z));
+		case KeyEvent::KEY_LEFT:	setCameras(Vec3f(mHeadCam0.mEye.x - 100, mHeadCam0.mEye.y, mHeadCam0.mEye.z), true);
 									break;
 			//case KeyEvent::KEY_RIGHT:	mMouseRightPos = Vec2f(-256.0f, 122.0f ) + getWindowCenter();	break;
-		case KeyEvent::KEY_RIGHT:	setCameras(Vec3f(mHeadCam0.mEye.x + 100, mHeadCam0.mEye.y, mHeadCam0.mEye.z));	break;
+		case KeyEvent::KEY_RIGHT:	setCameras(Vec3f(mHeadCam0.mEye.x + 100, mHeadCam0.mEye.y, mHeadCam0.mEye.z), true);	break;
 		//case KeyEvent::KEY_DOWN:	mMouseRightPos = Vec2f(   0.0f,   0.0f ) + getWindowCenter();	break;
-		case KeyEvent::KEY_DOWN:	setCameras(Vec3f(mHeadCam0.mEye.x, mHeadCam0.mEye.y, mHeadCam0.mEye.z + 100));
+		case KeyEvent::KEY_DOWN:	setCameras(Vec3f(mHeadCam0.mEye.x, mHeadCam0.mEye.y, mHeadCam0.mEye.z + 100), true);
 									break;
 		default: break;
 	}
@@ -421,13 +420,16 @@ void TerrainApp::keyDown( KeyEvent event )
 
 void TerrainApp::update()
 {	
-	float x = mMouseRightPos.x - getWindowSize().x * 0.5f;
+	//float x = mMouseRightPos.x - getWindowSize().x * 0.5f;
+	//float y = mSphere.getCenter().y;
+	//float z = mMouseRightPos.y - getWindowSize().y * 0.5f;
+	float x =  randInt(FBO_SIZE / 2) - FBO_SIZE /4;
 	float y = mSphere.getCenter().y;
-	float z = mMouseRightPos.y - getWindowSize().y * 0.5f;
+	float z =  randInt(FBO_SIZE/ 2) - FBO_SIZE /4;
 	mSpherePosDest = Vec3f( x, y, z );
-	mSpherePos -= ( mSpherePos - mSpherePosDest ) * 0.02f;
+	//mSpherePos -= ( mSpherePos - mSpherePosDest ) * 0.02f;
 	
-	mSphere.setCenter( mSpherePos );
+	//mSphere.setCenter( mSpherePos );
 	
 	// ROOM
 	mRoom.update();
@@ -460,26 +462,34 @@ void TerrainApp::update()
 	//if( mMouseLeftDown ) 
 	//	mActiveHeadCam.dragCam( ( mMouseOffset ) * 0.01f, ( mMouseOffset ).length() * 0.01 );
 	//mActiveHeadCam.update( mRoom.getPower(), 0.5f );
-
+	//mHeadCam0.mEye.z -= 600;
 	Vec3f projectionEye = mHeadCam0.mEye;
 	projectionEye.x = mHeadCam0.mCenter.x;
 	projectionEye.y = mHeadCam0.mCenter.y;
 
 	float zOffset = projectionEye.z - mHeadCam0.mCenter.z;
-	
+	// We have to adjust the camera to take into account that it
+	//  doesn't distort enough past the edge of the screen
+	float r = 0.0f; 
+	float camXStorage = mHeadCam0.mEye.x;
+	if (mHeadCam0.mEye.x < -300){
+		r = (mHeadCam0.mEye.x + (ROOM_WIDTH / 2 )) / (mHeadCam0.mEye.z - (ROOM_DEPTH / 2));
+		mHeadCam0.mEye.x += r * mHeadCam0.mEye.z;
+	}
+
 	Vec3f bottomLeft = Vec3f(-300, -200, -zOffset);
 	Vec3f bottomRight = Vec3f(300, -200, -zOffset);
 	Vec3f topLeft = Vec3f(-300, 200, -zOffset);
 
 	mHeadCam0.update(projectionEye, bottomLeft, bottomRight, topLeft);
+	// Restore our camera position
+	mHeadCam0.mEye.x = camXStorage;
+
 	console() << "cam0 position" << mHeadCam0.mEye << std::endl;
 	console() << "projectionEye position" << projectionEye << std::endl;
-
+	// Make sure to set it back, so updating doesn't make this fly away...
 	
-	
-
 	// Now update Camera 1
-	
 	
 	float xOffset = projectionEye.x - mHeadCam1.mCenter.x;
 	
@@ -493,16 +503,25 @@ void TerrainApp::update()
 	projectionEye.z = mHeadCam1.mCenter.z;
 
 	Vec3f tempEye = mHeadCam1.mEye;
+	// Again, I don't know why I've got to multiply this by 2
 	mHeadCam1.mEye.x = tempEye.z;
 	mHeadCam1.mEye.z = -tempEye.x;
 
+	
 	projectionEye = Vec3f(-mHeadCam1.mEye.z,0, 0);
-	//projectionEye = Vec3f(-1200,0, 0);
+
+	// Again, we have to adjust for the incorrect camera correction
+	if (mHeadCam1.mEye.x > 300){
+		r = (mHeadCam1.mEye.x - (ROOM_DEPTH / 2 )) / (mHeadCam1.mEye.z - (ROOM_WIDTH / 2));
+		mHeadCam1.mEye.x += r * mHeadCam1.mEye.z;
+	}
+	
+	console() << "ratio is : " << r << std::endl;
 	
 	mHeadCam1.update(projectionEye, bottomLeft, bottomRight, topLeft);
+	
 	console() << "cam1 position" << mHeadCam1.mEye << std::endl;
 	console() << "projectionEye position" << projectionEye << std::endl;
-
 	mHeadCam1.mEye.x = tempEye.x;
 	mHeadCam1.mEye.z = tempEye.z;
 }
@@ -592,13 +611,13 @@ void TerrainApp::drawGuts(Area area)
 	mRoomFbo.bindTexture();
 	gl::drawSolidRect( getWindowBounds() );
 	HeadCam *thisViewsCam = getWindow()->getUserData<HeadCam>();
-	gl::setMatrices( mActiveHeadCam.getCam() );
+	//gl::setMatrices( mActiveHeadCam.getCam() );
 
 	gl::color( ColorA( power, power, power, power * 0.1f + 0.9f ) );
 	
 
 	// DRAW INFO PANEL
-	drawInfoPanel();
+	//drawInfoPanel();
 	
 	gl::enable( GL_TEXTURE_2D );
 	gl::color( ColorA( 1.0f, 1.0f, 1.0f, 1.0f ) );
@@ -703,7 +722,7 @@ void TerrainApp::drawInfoPanel()
 	// DRAW ROOM NUM AND DESC
 	float c = mRoom.getPower() * 0.5f + 0.5f;
 	gl::color( ColorA( c, c, c, 0.5f ) );
-	gl::draw( mIconTex, Rectf( X0, Y0, X1, Y1 ) );
+	//gl::draw( mIconTex, Rectf( X0, Y0, X1, Y1 ) );
 	
 	c = mRoom.getPower();
 	gl::color( ColorA( c, c, c, 0.5f ) );
