@@ -97,6 +97,11 @@
                     </ToolTip>
                 </CheckBox.ToolTip>
             </CheckBox>
+            <TextBox x:Name="AnimataScaleTextBox" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="135,-35,0,0" Width="60" Height="25" FontSize="16" Text="1.0" 
+            	VerticalContentAlignment="Center"/>
+            <TextBox x:Name="OscAddress" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="85,-20,0,0" Width="110" Height="25" FontSize="16" Text="" 
+                 VerticalContentAlignment="Center" IsEnabled="false" KeyUp="OscAddressKeyUp"/>
+            <Button x:Name="ChangeAddress" Content="Change" Width="50" Height="25" HorizontalAlignment="Left" Click="ChangeAddressClicked" Margin="200 -25 0 0"/>
             <TextBlock Name="OscLabel" Text="OSC Address" Margin="0,0,0,0" FontSize="14" Width="85" HorizontalAlignment="Left" ToolTipService.ShowDuration="24000">
                 <TextBlock.ToolTip>
                     <ToolTip>
@@ -112,6 +117,19 @@
                     </ToolTip>
                 </TextBlock.ToolTip>
             </TextBlock>
+            <TextBlock x:Name="PortLabel_Copy" Text="Animata Scaling" Margin="0,-40,0,0" FontSize="14" Height="26" Width="113" HorizontalAlignment="Left" ToolTipService.ShowDuration="15000">
+                <TextBlock.ToolTip>
+                    <ToolTip>
+                        <StackPanel>
+                            <TextBlock FontWeight="Bold"><Run Text="Set Port Number"/></TextBlock>
+                            <TextBlock><Run Text="Port number can be anything from 0 - 65535"/></TextBlock>
+                            <TextBlock><Run Text="But it is recommended to use a port between 1025 and 49151"/></TextBlock>
+                            <TextBlock><Run Text="Hitting the change button or the enter key will trigger the change"/></TextBlock>
+                        </StackPanel>
+                    </ToolTip>
+                </TextBlock.ToolTip>
+
+            </TextBlock>
             <CheckBox Style="{StaticResource SquareCheckBox}" IsChecked="True" Content="Send Animata Data" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Top" 
             	Margin="265 -10 0 10" x:Name="checkBoxSendAnimataData" Checked="CheckBoxSendAnimataData" ToolTipService.ShowDuration="15000" IsEnabled="True">
                 <CheckBox.ToolTip>
@@ -125,9 +143,6 @@
                     </ToolTip>
                 </CheckBox.ToolTip>
             </CheckBox>
-            <TextBox Name="OscAddress" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="85,-20,0,0" Width="110" Height="25" FontSize="16" Text="" 
-                 VerticalContentAlignment="Center" IsEnabled="false" KeyUp="OscAddressKeyUp"></TextBox>
-            <Button Name="ChangeAddress" Content="Change" Width="50" Height="25" HorizontalAlignment="Left" Click="ChangeAddressClicked" Margin="200 -25 0 0"></Button>
             <CheckBox Style="{StaticResource SquareCheckBox}" IsChecked="False" Content="Show OSC Data" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Top" 
                   Margin="265 -55 0 10" Name="checkBoxShowOscData" Checked="CheckBoxShowOscDataChanged" Unchecked="CheckBoxShowOscDataChanged" ToolTipService.ShowDuration="12000">
                 <CheckBox.ToolTip>
@@ -152,24 +167,9 @@
                 </TextBlock.ToolTip>
 
             </TextBlock>
-            <TextBox Name="OscPort" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="135,-35,0,0" Width="60" Height="25" FontSize="16" Text="7110" 
+            <TextBox Name="OscPort" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="135,-35,0,0" Width="60" Height="25" FontSize="16" Text="7111" 
                  VerticalContentAlignment="Center" KeyUp="OscPortKeyUp"></TextBox>
             <Button Name="ChangePort" Content="Change" Width="50" Height="25" HorizontalAlignment="Left" Click="ChangePortClicked" Margin="200 -45 0 0"></Button>
-            <TextBlock x:Name="PortLabel_Copy" Text="Animata Scaling" Margin="0,-40,0,0" FontSize="14" Height="26" Width="113" HorizontalAlignment="Left" ToolTipService.ShowDuration="15000">
-                <TextBlock.ToolTip>
-                    <ToolTip>
-                        <StackPanel>
-                            <TextBlock FontWeight="Bold"><Run Text="Set Port Number"/></TextBlock>
-                            <TextBlock><Run Text="Port number can be anything from 0 - 65535"/></TextBlock>
-                            <TextBlock><Run Text="But it is recommended to use a port between 1025 and 49151"/></TextBlock>
-                            <TextBlock><Run Text="Hitting the change button or the enter key will trigger the change"/></TextBlock>
-                        </StackPanel>
-                    </ToolTip>
-                </TextBlock.ToolTip>
-
-            </TextBlock>
-            <TextBox x:Name="AnimataScaleTextBox" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="135,-35,0,0" Width="60" Height="25" FontSize="16" Text="1.0" 
-            	VerticalContentAlignment="Center"/>
             <Button x:Name="ChangeScale" Content="Change" Width="50" Height="25" HorizontalAlignment="Left" Click="ChangeScaleClicked" Margin="200 -45 0 0"/>
         </StackPanel>
         <StatusBar Grid.Row="4" Grid.ColumnSpan="3" HorizontalAlignment="Stretch" Name="statusBar" VerticalAlignment="Bottom" Background="White" Foreground="{StaticResource MediumGreyBrush}" Height="26">

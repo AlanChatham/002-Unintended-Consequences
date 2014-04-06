@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -19,7 +19,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
@@ -50,7 +50,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\include;..\..\..\..\..\Desktop\cinder_0.8.5_vc2012\include;..\..\..\..\..\Desktop\cinder_0.8.5_vc2012\boost;..\blocks;..\blocks\OSC\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;..\blocks\OSC\src;..\..\cinder_0.8.5_vc2012\boost;..\..\cinder_0.8.5_vc2012\include;..\PutCinderHere\cinder_0.8.5_vc2012\boost;..\PutCinderHere\cinder_0.8.5_vc2012\include;..\PutCinderHere\boost</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;NOMINMAX;_WIN32_WINNT=0x0502;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -61,11 +61,11 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <ResourceCompile>
-      <AdditionalIncludeDirectories>"..\..\..\..\..\Desktop\cinder_0.8.5_vc2012\include";..\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\cinder_0.8.5_vc2012\include;..\PutCinderHere\include;..\PutCinderHere\cinder_0.8.5_vc2012\include;..\include</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>cinder_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"..\..\..\..\..\Desktop\cinder_0.8.5_vc2012\lib";"..\..\..\..\..\Desktop\cinder_0.8.5_vc2012\lib\msw"</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\cinder_0.8.5_vc2012\lib;..\..\cinder_0.8.5_vc2012\lib\msw;..\PutCinderHere\cinder_0.8.5_vc2012\lib;..\PutCinderHere\cinder_0.8.5_vc2012\lib\msw;..\PutCinderHere\lib;..\PutCinderHere\msw</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -76,7 +76,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\include;"..\..\..\..\..\Desktop\cinder_0.8.5_vc2012\include";"..\..\..\..\..\Desktop\cinder_0.8.5_vc2012\boost";..\blocks\OSC\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;..\blocks\OSC\src;..\..\cinder_0.8.5_vc2012\boost;..\..\cinder_0.8.5_vc2012\include;..\PutCinderHere\cinder_0.8.5_vc2012\boost;..\PutCinderHere\cinder_0.8.5_vc2012\include;..\PutCinderHere\boost</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;NOMINMAX;_WIN32_WINNT=0x0502;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader />
@@ -88,11 +88,11 @@
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
     </ProjectReference>
     <ResourceCompile>
-      <AdditionalIncludeDirectories>"..\..\..\..\..\Desktop\cinder_0.8.5_vc2012\include";..\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\cinder_0.8.5_vc2012\include;..\PutCinderHere\include;..\PutCinderHere\cinder_0.8.5_vc2012\include;..\include</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>cinder.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"..\..\..\..\..\Desktop\cinder_0.8.5_vc2012\lib";"..\..\..\..\..\Desktop\cinder_0.8.5_vc2012\lib\msw"</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\cinder_0.8.5_vc2012\lib;..\..\cinder_0.8.5_vc2012\lib\msw;..\PutCinderHere\cinder_0.8.5_vc2012\lib;..\PutCinderHere\cinder_0.8.5_vc2012\lib\msw;..\PutCinderHere\lib;..\PutCinderHere\msw</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <GenerateMapFile>true</GenerateMapFile>
       <SubSystem>Windows</SubSystem>
