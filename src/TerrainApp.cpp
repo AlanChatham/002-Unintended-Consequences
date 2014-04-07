@@ -576,7 +576,7 @@ void TerrainApp::drawGuts(Area area)
 	// Bind 
 	mRoomFbo.bindTexture();
 	gl::drawSolidRect( getWindowBounds() );
-	HeadCam *thisViewsCam = getWindow()->getUserData<HeadCam>();
+	//HeadCam *thisViewsCam = getWindow()->getUserData<HeadCam>();
 	//gl::setMatrices( mActiveHeadCam.getCam() );
 
 	gl::color( ColorA( power, power, power, power * 0.1f + 0.9f ) );
